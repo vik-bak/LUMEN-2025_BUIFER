@@ -1,0 +1,20 @@
+@import "tailwindcss";
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+:root {
+    --grid-color: #80808060;
+    --axis-color: #333;
+    --label-color: #111;
+    --tooltip-bg: rgba(255, 255, 255, 0.9);
+    --tooltip-border: #ccc;
+  }
+  
+  .dark {
+    --grid-color: #ddd;
+    --axis-color: #bbb;
+    --label-color: #ddd;
+    --tooltip-bg: rgba(30, 30, 30, 0.9);
+    --tooltip-border: #666;
+  }
+  

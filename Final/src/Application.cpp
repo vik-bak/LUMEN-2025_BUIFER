@@ -11,6 +11,11 @@
 #include "EspNowTransport.h"
 #include "OutputBuffer.h"
 #include "config.h"
+#include "SampleSource.h"
+#include "I2SOutputWAV.h"
+#include "WAVFileReader.h"
+
+
 
 #ifdef ARDUINO_TINYPICO
 #include "TinyPICOIndicatorLed.h"
@@ -58,6 +63,9 @@ Application::Application()
   {
     pinMode(I2S_SPEAKER_SD_PIN, OUTPUT);
   }
+  //Adeed pointers
+  wav_sample_source = new WAVFileReader("/ddd.wav");
+  wav_output = new I2SOutputWAV();
 }
 
 void Application::begin()
@@ -90,6 +98,7 @@ void Application::begin()
 #endif
   Serial.print("My MAC Address is: ");
   Serial.println(WiFi.macAddress());
+  Serial2.println("ESP32 ready (PuTTY)");
   // do any setup of the transport
   m_transport->begin();
   // connected so show a solid green light
@@ -158,5 +167,9 @@ void Application::loop()
       digitalWrite(I2S_SPEAKER_SD_PIN, LOW);
     }
     Serial.println("Finished Receiving");
+
+
+
+
   }
 }

@@ -7,6 +7,7 @@ class OutputBuffer;
 class IndicatorLed;
 class SampleSource;
 class I2SOutputWAV;
+extern volatile bool isReceiving;
 
 class Application
 {
@@ -18,9 +19,11 @@ private:
   OutputBuffer *m_output_buffer;
   SampleSource *wav_sample_source;
   I2SOutputWAV *wav_output;
+  int control = 0;
 
 public:
   Application();
   void begin();
   void loop();
+  
 };

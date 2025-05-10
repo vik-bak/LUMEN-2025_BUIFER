@@ -120,9 +120,23 @@ void Application::loop()
   // continue forever
   while (true)
   {
+    int i=0;
+    
+    while(!isReceiving) {
+        
+        vTaskDelay(1000 / portTICK_PERIOD_MS);
+        if(i == 0) {
+          i++;
+          control++;
+          Serial2.println("Waiting");  
+        }
+        
+        
+    }
     // do we need to start transmitting?
     if (digitalRead(GPIO_TRANSMIT_BUTTON))
     {
+      
       Serial.println("Started transmitting");
       //m_indicator_led->set_is_flashing(true, 0xff0000);
       // stop the output as we're switching into transmit mode
@@ -150,25 +164,35 @@ void Application::loop()
     }
     // while the transmit button is not pushed and 1 second has not elapsed
     Serial.println("Started Receiving");
-    if (I2S_SPEAKER_SD_PIN != -1)
-    {
-      digitalWrite(I2S_SPEAKER_SD_PIN, HIGH);
-    }
+    i++;
     unsigned long start_time = millis();
     while (millis() - start_time < 1000 || !digitalRead(GPIO_TRANSMIT_BUTTON))
     {
+      
+      if(control>=1) {
+        Serial2.println("I WAS HERE");
+        m_output_buffer->nullBuffer();
+        control = 0;
+      }
       // read from the output buffer (which should be getting filled by the transport)
       m_output_buffer->remove_samples(samples, 128);
       // and send the samples to the speaker
       m_output->write(samples, 128);
+      
+      if (isReceiving == false) {
+        // stop receiving
+        // Serial.println("Stopping Receiving");
+        // isReceiving = true; // Reset the flag
+        // m_input->stop();
+        //m_output->stop();
+        break;
+      }
     }
-    if (I2S_SPEAKER_SD_PIN != -1)
-    {
-      digitalWrite(I2S_SPEAKER_SD_PIN, LOW);
-    }
+
     Serial.println("Finished Receiving");
-
-
+  
+    // Serial.print("Running on core: ");
+    // Serial.println(xPortGetCoreID());
 
 
   }

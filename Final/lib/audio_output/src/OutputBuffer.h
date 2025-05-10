@@ -96,4 +96,12 @@ public:
     }
     xSemaphoreGive(m_semaphore);
   }
+
+
+  void nullBuffer() {
+
+  memset(m_buffer, 0, sizeof(uint8_t)* 14400);
+}
 };
+
+

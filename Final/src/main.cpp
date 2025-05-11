@@ -1,20 +1,43 @@
 #include <Arduino.h>
 #include "Application.h"
 #include "esp_system.h"
+#include "SampleSource.h"
+#include "I2SOutputWAV.h"
+#include "WAVFileReader.h"
 //Define pins for Serial 2 UART
 #define SERIAL2_RX_PIN 25
 #define SERIAL2_TX_PIN 33
 #define SERIAL2_BAUD_RATE 9600
-
+// i2s pins WAV pins
+i2s_pin_config_t i2s_wav_pins = {
+    .bck_io_num = GPIO_NUM_18,
+    .ws_io_num = GPIO_NUM_19,
+    .data_out_num = GPIO_NUM_5,
+    .data_in_num = -1};
 
 // our application
 Application *application;
 //Added a semaphore to control the access to the serial port
 SemaphoreHandle_t xSemaphoreMain = NULL; // Create semaphore handle
+SampleSource *wav_sample_source;
+I2SOutputWAV *wav_output;
+File m_file;
 volatile bool isReceiving = true; // Flag to check if semaphore is created
+
 void setup()
 {
+  // put your setup code here, to run once:
   Serial.begin(115200);
+    //Adeed pointers
+  Serial.println("Starting up");
+
+  SPIFFS.begin();
+
+  Serial.println("Created sample source");
+  wav_sample_source = new WAVFileReader("/ddd.wav");
+
+  wav_output = new I2SOutputWAV();
+  
   delay(1000);
   int coreCount = ESP.getChipCores();
   Serial.print("Number of cores: ");
@@ -56,11 +79,8 @@ void loop()
       if (input == "20") {
         isReceiving = false; // Set the flag to stop receiving
               //Simulate some work in the high priority task
-              
-      for (int i = 0; i < 5000; i++) {
-        Serial.print("High priority task working... ");
-        Serial.println(i + 1);
-      }
+              wav_output->start(I2S_NUM_1, i2s_wav_pins, wav_sample_source);
+
       isReceiving = true;
       
       }

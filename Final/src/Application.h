@@ -17,8 +17,6 @@ private:
   Transport *m_transport;
   IndicatorLed *m_indicator_led;
   OutputBuffer *m_output_buffer;
-  SampleSource *wav_sample_source;
-  I2SOutputWAV *wav_output;
   int control = 0;
 
 public:

@@ -11,9 +11,7 @@
 #include "EspNowTransport.h"
 #include "OutputBuffer.h"
 #include "config.h"
-#include "SampleSource.h"
-#include "I2SOutputWAV.h"
-#include "WAVFileReader.h"
+
 
 
 
@@ -63,9 +61,7 @@ Application::Application()
   {
     pinMode(I2S_SPEAKER_SD_PIN, OUTPUT);
   }
-  //Adeed pointers
-  wav_sample_source = new WAVFileReader("/ddd.wav");
-  wav_output = new I2SOutputWAV();
+
 }
 
 void Application::begin()

@@ -66,6 +66,7 @@ void i2sWriterTask(void *param)
                     Serial.print(counter);
                     
                     if(counter > 90) {
+                        counter = 0;
                         Serial.println("Killing task");
                         i2s_stop(output->m_i2sPort);
                         i2s_driver_uninstall(output->m_i2sPort);

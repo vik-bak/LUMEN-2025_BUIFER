@@ -5,9 +5,10 @@
 #include <WiFi.h>
 #include <WiFiClientSecure.h>
 #include <FirebaseClient.h>
+#include "driver/gpio.h"
 
-#define WIFI_SSID "AsusZenfone9"             //WiFi credentials for phone hotspot to connect ESP to net
-#define WIFI_PASSWORD "Pass23124"
+#define WIFI_SSID "mihaNetwork"             //WiFi credentials for phone hotspot to connect ESP to net
+#define WIFI_PASSWORD "uhms9878"
 
 #define Web_API_KEY "AIzaSyDleCwr2Yf0GMV6kfq52yU1A5x8DI3JvEA"  //Firebase project API
 
@@ -29,6 +30,8 @@ RealtimeDatabase Database;   //Realtime database object
 #define TXD1 12          //UART for connecting STM32 to ESP for receieving sensor data
 #define RXD1 13
 
+#define BUTTON_GPIO GPIO_NUM_0
+
 HardwareSerial mySerial(2);
 
 typedef struct {
@@ -40,24 +43,22 @@ sensorData sendStruct;
 sensorData rcvStruct;
 
 TaskHandle_t acqHandle;
-TaskHandle_t sendHandle;
-//xQueueHandle queueHandle;
+TaskHandle_t cameraHandle;
+SemaphoreHandle_t camSemaphoreHandle;
 
 int ink = 1;
 // put function declarations here:
 void acquireData(void *pvParameters);
-void sendData(void *pvParameters);
+void cameraTask(void *pvParameters);
+
 void processData(AsyncResult &aResult);
+void IRAM_ATTR gpio_isr_handler(void* arg);
 
 void setup() {
 
   // put your setup code here, to run once:
   Serial.begin(115200);
   mySerial.begin(115200,SERIAL_8N1,RXD1,TXD1);
-
-  /*TaskHandle_t acqHandle;
-  TaskHandle_t sendHandle;
-  xQueueHandle queueHandle;*/
 
   WiFi.begin(WIFI_SSID, WIFI_PASSWORD);  //Connecting to WiFi
   Serial.print("Connecting to Wi-Fi");
@@ -67,6 +68,14 @@ void setup() {
   }
   Serial.println();
 
+  /*gpio_set_intr_type(BUTTON_GPIO,GPIO_INTR_POSEDGE);
+  gpio_install_isr_service(0);
+
+  /* Attach the ISR to the GPIO interrupt */
+  //gpio_isr_handler_add(BUTTON_GPIO, gpio_isr_handler, NULL);
+
+    /* Enable the Interrupt */
+  //gpio_intr_enable(BUTTON_GPIO);
   ssl_client.setInsecure();  //Configure the client
   ssl_client.setTimeout(1000);
   ssl_client.setHandshakeTimeout(5);
@@ -77,9 +86,20 @@ void setup() {
   initializeApp(aClient, app, getAuth(user_auth), processData, "🔐 authTask");  //Initialize Firebase app
   app.getApp<RealtimeDatabase>(Database);   //Set the database object defined earlier as database for firebase app
   Database.url(DATABASE_URL);  //Set the URL to the database
-  //queueHandle = xQueueCreate(2,sizeof(sensorData));
+  camSemaphoreHandle = xSemaphoreCreateBinary();
+  if(camSemaphoreHandle == NULL){
+    Serial.println("Senaphore not created succesfully.");
+  }
   xTaskCreate(acquireData,"data acquisition",8192,(void*) NULL,2,&acqHandle);
-  xTaskCreate(sendData,"data sending",8192,(void*) NULL,3,&sendHandle);
+  xTaskCreate(cameraTask,"camera stuff",8192,(void*) NULL, 1, &cameraHandle);
+  gpio_set_intr_type(BUTTON_GPIO,GPIO_INTR_POSEDGE);
+  gpio_install_isr_service(0);
+
+  /* Attach the ISR to the GPIO interrupt */
+  gpio_isr_handler_add(BUTTON_GPIO, gpio_isr_handler, NULL);
+
+    /* Enable the Interrupt */
+  gpio_intr_enable(BUTTON_GPIO);
   vTaskStartScheduler();
 }
 
@@ -91,7 +111,7 @@ void loop() {
 void acquireData(void *pvParameters){
 
   for(;;){
-    app.loop();  // 👈 VERY IMPORTANT, always call this in your task loop
+    app.loop();  
 
     if(!app.ready()){
       Serial.println("Firebase app not ready");
@@ -120,35 +140,14 @@ void acquireData(void *pvParameters){
   }
 }
 
-void sendData(void *pvParameters){
+void cameraTask(void *pvParameters){
 
-   for(;;){
-   /* app.loop();
-    if(app.ready()){    
-
-      if (xQueueReceive(queueHandle,&rcvStruct,portMAX_DELAY) == pdPASS){
-      char buffer[100];
-      sprintf(buffer,"/data2/%d/temp",ink);
-      Serial.println(buffer);
-      Database.set<int>(aClient,buffer,rcvStruct.temp,processData,"RTDB_Send_Int");
-      buffer[0] = '\0';
-      sprintf(buffer,"/data2/%d/hum",ink);
-      Serial.println(buffer);
-      Database.set<int>(aClient,buffer,rcvStruct.hum,processData,"RTDB_Send_Int");
-      if (ink < 5){
-      ink++;
-      } else ink = 1;
-      Serial.printf("Free heap: %u\n", ESP.getFreeHeap());
-      Serial.println(ink);
-    }
+  for(;;){
+      if(xSemaphoreTake(camSemaphoreHandle,portMAX_DELAY) == pdPASS){
+        Serial.println("Picture taken");
+      }
   }
-    //Database.set<int>(aClient,"/test/int",5,processData,"RTDB_Send_Int");
-    //Serial.printf("Free heap: %u\n", ESP.getFreeHeap());*/
-    vTaskDelay(pdMS_TO_TICKS(20));
-   }
-   
 }
-
 
 void processData(AsyncResult &aResult) {
   if (!aResult.isResult())
@@ -165,4 +164,14 @@ void processData(AsyncResult &aResult) {
 
   if (aResult.available())
     Firebase.printf("task: %s, payload: %s\n", aResult.uid().c_str(), aResult.c_str());
+}
+
+void IRAM_ATTR gpio_isr_handler(void* arg){
+  BaseType_t task_woken = pdFALSE;
+	xSemaphoreGiveFromISR(camSemaphoreHandle,&task_woken);
+
+		  if(task_woken){
+			  portYIELD_FROM_ISR(task_woken);
+
+		  }
 }

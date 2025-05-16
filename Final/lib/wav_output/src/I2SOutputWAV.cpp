@@ -66,14 +66,16 @@ void i2sWriterTask(void *param)
                     Serial.print(counter);
                     
                     if(counter > 90) {
+                        static int pass = 1;
                         counter = 0;
                         Serial.println("Killing task");
                         i2s_stop(output->m_i2sPort);
                         i2s_driver_uninstall(output->m_i2sPort);
                         // free the frames buffer
-                        counter++;
-                        xQueueSend(passQueue, &counter, 5);
+                        
+                        
                         free(frames);
+                        xQueueSend(passQueue, &pass, 5);
                         vTaskDelete(NULL);
                     }
                 } while (bytesWritten > 0);

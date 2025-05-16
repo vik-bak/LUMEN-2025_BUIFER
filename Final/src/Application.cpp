@@ -191,14 +191,14 @@ void Application::loop()
       m_output->write(samples, 128);
       //Receive the data from the queue
       if (xQueueReceive(counterQueue, &control, 0) == pdTRUE) {
-        Serial2.print("Received from queue");
+        Serial2.print("Received from queue: ");
         Serial2.println(control);
         
-        Serial2.print("Received from queue");
+        
         if(control>=1) {
-          control++;
+          control = 2;
           
-          Serial2.print("ESCAPING");
+          Serial2.println("ESCAPING");
           break;
         }
 

@@ -133,6 +133,7 @@ void Application::loop()
           m_output->start(SAMPLE_RATE);
           Serial2.println("I PASSED");
           control = 0;
+          m_output_buffer->nullBuffer();
           break;
         }
 

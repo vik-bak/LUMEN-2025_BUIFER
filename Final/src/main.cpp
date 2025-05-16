@@ -22,8 +22,8 @@ SemaphoreHandle_t xSemaphoreMain = NULL; // Create semaphore handle
 SampleSource *wav_sample_source;
 I2SOutputWAV *wav_output;
 File m_file;
-volatile bool isReceiving = true; // Flag to check if semaphore is created
-
+QueueHandle_t counterQueue = NULL;
+QueueHandle_t passQueue = NULL;
 void setup()
 {
   // put your setup code here, to run once:
@@ -53,7 +53,14 @@ void setup()
   // xSemaphoreGive(xSemaphoreMain); // Give the semaphore to start with
   //xTaskCreatePinnedToCore()
   // start up the application
-  
+  //Create a queue to hold the counter value
+  counterQueue = xQueueCreate(10, sizeof(int));
+  passQueue = xQueueCreate(10, sizeof(int));
+  if (counterQueue == NULL) {
+    Serial.println("Failed to create queue");
+  } else {
+    Serial.println("Queue created successfully");
+  }
   application = new Application();
   application->begin();
   Serial.println("Application started");
@@ -66,9 +73,10 @@ void loop()
   // Serial.println(xPortGetCoreID());
   // nothing to do - the application is doing all the work
 
-  
+    static int counter = 0;
+    static int pass = 0;
     if (Serial2.available()) {
-      
+          
       String input = Serial2.readStringUntil('\n');
       input.trim(); // Remove any trailing whitespace or newline characters
       Serial.print("From PuTTY: ");
@@ -77,13 +85,15 @@ void loop()
       Serial2.println(input);
 
       if (input == "20") {
-        isReceiving = false; // Set the flag to stop receiving
+        counter++;
+          xQueueSend(counterQueue, &counter, 5);
               //Simulate some work in the high priority task
               wav_output->start(I2S_NUM_1, i2s_wav_pins, wav_sample_source);
-
-      isReceiving = true;
+              
+      
       
       }
+      
       
     }
 

@@ -5,7 +5,7 @@
 #include "driver/i2s.h"
 
 class SampleSource;
-
+extern QueueHandle_t passQueue;
 /**
  * Base Class for both the ADC and I2S sampler
  **/

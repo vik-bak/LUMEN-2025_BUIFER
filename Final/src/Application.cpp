@@ -116,19 +116,34 @@ void Application::loop()
   // continue forever
   while (true)
   {
-    int i=0;
     
-    while(!isReceiving) {
-        
-        vTaskDelay(1000 / portTICK_PERIOD_MS);
-        if(i == 0) {
-          i++;
-          control++;
-          Serial2.println("Waiting");  
+    while(control == 2) {
+      static int pass = 0;
+      
+      Serial2.println("I WAS HERE");
+      
+      //Check if the queue is empty
+        //Receive the data from the queue
+
+        if(xQueueReceive(passQueue, &pass, 0) == pdTRUE) {
+        Serial2.print("Received from queue");
+        Serial2.println(pass);
+          if(pass) {
+          m_output->stop();
+          m_output->start(SAMPLE_RATE);
+          Serial2.println("I PASSED");
+          control = 0;
+          break;
         }
-        
-        
-    }
+
+        };
+        vTaskDelay(1000 / portTICK_PERIOD_MS);
+      }
+
+
+    
+    
+
     // do we need to start transmitting?
     if (digitalRead(GPIO_TRANSMIT_BUTTON))
     {
@@ -160,29 +175,36 @@ void Application::loop()
     }
     // while the transmit button is not pushed and 1 second has not elapsed
     Serial.println("Started Receiving");
-    i++;
+    
     unsigned long start_time = millis();
     while (millis() - start_time < 1000 || !digitalRead(GPIO_TRANSMIT_BUTTON))
     {
       
-      if(control>=1) {
-        Serial2.println("I WAS HERE");
-        m_output_buffer->nullBuffer();
-        control = 0;
-      }
+      // if(control>=1) {
+      //   Serial2.println("I WAS HERE");
+      //   m_output_buffer->nullBuffer();
+      //   control = 0;
+      // }
       // read from the output buffer (which should be getting filled by the transport)
       m_output_buffer->remove_samples(samples, 128);
       // and send the samples to the speaker
       m_output->write(samples, 128);
-      
-      if (isReceiving == false) {
-        // stop receiving
-        // Serial.println("Stopping Receiving");
-        // isReceiving = true; // Reset the flag
-        // m_input->stop();
-        //m_output->stop();
-        break;
+      //Receive the data from the queue
+      if (xQueueReceive(counterQueue, &control, 0) == pdTRUE) {
+        Serial2.print("Received from queue");
+        Serial2.println(control);
+        
+        Serial2.print("Received from queue");
+        if(control>=1) {
+          control++;
+          
+          Serial2.print("ESCAPING");
+          break;
+        }
+
       }
+      
+
     }
 
     Serial.println("Finished Receiving");

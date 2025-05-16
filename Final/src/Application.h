@@ -7,8 +7,8 @@ class OutputBuffer;
 class IndicatorLed;
 class SampleSource;
 class I2SOutputWAV;
-extern volatile bool isReceiving;
-
+extern QueueHandle_t counterQueue;
+extern QueueHandle_t passQueue; 
 class Application
 {
 private:

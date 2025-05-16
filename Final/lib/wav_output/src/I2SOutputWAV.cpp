@@ -71,6 +71,8 @@ void i2sWriterTask(void *param)
                         i2s_stop(output->m_i2sPort);
                         i2s_driver_uninstall(output->m_i2sPort);
                         // free the frames buffer
+                        counter++;
+                        xQueueSend(passQueue, &counter, 5);
                         free(frames);
                         vTaskDelete(NULL);
                     }

@@ -1,6 +1,23 @@
 import React, { useEffect, useState } from 'react';
-import { ref, get } from 'firebase/database';
+import { ref, get, onValue } from 'firebase/database';
 import { database } from '../firebase';
+
+const useNewPicture = () => {
+    const [newPictureAvailable, setNewPictureAvailable] = useState(false);
+
+    useEffect(() => {
+        const newPictureRef = ref(database, 'new_picture');
+
+        const unsubscribe = onValue(newPictureRef, (snapshot) => {
+            const value = snapshot.val();
+            setNewPictureAvailable(value === true);
+        });
+
+        return () => unsubscribe();
+    }, []);
+
+    return newPictureAvailable;
+};
 
 const useTemperatureData = () => {
     const [temperatureData, setTemperatureData] = useState([]);
@@ -8,7 +25,6 @@ const useTemperatureData = () => {
     useEffect(() => {
         const fetchData = async () => {
             const results = [];
-
             for (let i = 1; i <= 4; i++) {
                 const timeRef = ref(database, `data/${i}/gps_time`);
                 const tempRef = ref(database, `data2/${i}/hum`);
@@ -44,4 +60,4 @@ const useTemperatureData = () => {
     return temperatureData;
 };
 
-export default useTemperatureData;
+export {useTemperatureData, useNewPicture};

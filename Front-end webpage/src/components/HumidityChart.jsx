@@ -5,7 +5,7 @@ const HumidityChart = ({ data }) => {
   return (
     <div className="bg-white p-6 rounded-lg shadow-md dark:bg-gray-700 transition-all">
       <h2 className="text-xl font-semibold mb-4 text-gray-900 dark:text-gray-200">
-        Temperature (°C)
+        Humidity (%)
       </h2>
       <ResponsiveContainer width="100%" height={300}>
         <LineChart

@@ -1,31 +1,13 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { FiMenu, FiX, FiImage, FiBarChart2 } from 'react-icons/fi';
+import { FiMenu, FiX, FiBarChart2, FiSettings, FiCamera } from 'react-icons/fi';
 import ThemeToggle from './ThemeToggle';
+import { useTemperatureData, useNewPicture } from './FetchingTempData';
+import { useBatteryStatus, useHitDetected, useHazard } from './useBatteryStatus';
 
-const GraphSelector = ({ selectedGraph, onSelectGraph }) => {
-  const graphs = ['temperature', 'humidity', 'pressure', 'windSpeed'];
 
-  return (
-    <div className="flex justify-center gap-3 p-4 bg-white dark:bg-gray-800 rounded-xl shadow-md">
-      {graphs.map((graph) => (
-        <button
-          key={graph}
-          onClick={() => onSelectGraph(graph)}
-          className={`px-5 py-2 rounded-full font-medium transition-colors ${
-            selectedGraph === graph
-              ? 'bg-blue-500 text-white shadow-md'
-              : 'bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600'
-          }`}
-        >
-          {graph.charAt(0).toUpperCase() + graph.slice(1).replace(/([A-Z])/g, ' $1')}
-        </button>
-      ))}
-    </div>
-  );
-};
 
-const Header = ({ selectedGraph = 'temperature', onSelectGraph, onViewChange }) => {
+const Header = ({ onViewChange }) => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [currentView, setCurrentView] = useState('graphs');
 
@@ -33,18 +15,25 @@ const Header = ({ selectedGraph = 'temperature', onSelectGraph, onViewChange }) 
     setCurrentView(view);
     setSidebarOpen(false);
     onViewChange(view);
-    if (view === 'graphs') {
-      onSelectGraph('temperature');
-    }
   };
+
+  const newPictureAvailable = useNewPicture();
+  const batteryStatus = useBatteryStatus();
+  const hitDetected = useHitDetected();
+  const hazard = useHazard();
+
+  // Determine ping colors for status bar icon
+  // Priority: hitDetected/red, batteryStatus red, hazard purple
+  let statusPingColor = null;
+  if (hitDetected) statusPingColor = 'bg-red-600';
+  else if (batteryStatus === 3) statusPingColor = 'bg-red-600';
+  else if (hazard) statusPingColor = 'bg-purple-600';
 
   return (
     <header className="bg-white dark:bg-gray-900 shadow-lg">
-      {/* Sidebar with AnimatePresence for smooth transitions */}
       <AnimatePresence>
         {sidebarOpen && (
           <div className="fixed inset-0 z-40">
-            {/* Light overlay with reduced opacity */}
             <motion.div
               className="absolute inset-0 bg-gray-200 dark:bg-gray-700 opacity-70"
               initial={{ opacity: 0 }}
@@ -53,9 +42,7 @@ const Header = ({ selectedGraph = 'temperature', onSelectGraph, onViewChange }) 
               transition={{ duration: 0.2 }}
               onClick={() => setSidebarOpen(false)}
             />
-            
-            {/* Sidebar content */}
-            <motion.div 
+            <motion.div
               className="absolute top-0 left-0 h-full w-64 bg-white dark:bg-gray-800 shadow-xl z-50"
               initial={{ x: -300 }}
               animate={{ x: 0 }}
@@ -63,7 +50,7 @@ const Header = ({ selectedGraph = 'temperature', onSelectGraph, onViewChange }) 
               transition={{ type: 'spring', stiffness: 300, damping: 30 }}
             >
               <div className="p-4 flex justify-end">
-                <button 
+                <button
                   onClick={() => setSidebarOpen(false)}
                   className="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white"
                 >
@@ -75,28 +62,53 @@ const Header = ({ selectedGraph = 'temperature', onSelectGraph, onViewChange }) 
                   View Options
                 </h3>
                 <div className="space-y-3">
+
                   <button
                     onClick={() => handleViewChange('graphs')}
-                    className={`flex items-center w-full px-4 py-3 rounded-lg transition-colors ${
-                      currentView === 'graphs' 
+                    className={`flex items-center w-full px-4 py-3 rounded-lg transition-colors ${currentView === 'graphs'
                         ? 'bg-blue-100 text-blue-600 dark:bg-blue-900 dark:text-blue-200 font-medium'
                         : 'text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700'
-                    }`}
+                      }`}
                   >
                     <FiBarChart2 className="mr-3" />
                     Graphs View
                   </button>
+
                   <button
-                    onClick={() => handleViewChange('photos')}
-                    className={`flex items-center w-full px-4 py-3 rounded-lg transition-colors ${
-                      currentView === 'photos'
+                    onClick={() => handleViewChange('status')}
+                    className={`flex items-center w-full px-4 py-3 rounded-lg transition-colors ${currentView === 'status'
                         ? 'bg-blue-100 text-blue-600 dark:bg-blue-900 dark:text-blue-200 font-medium'
                         : 'text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700'
-                    }`}
+                      }`}
                   >
-                    <FiImage className="mr-3" />
-                    Photos View
+                    <div className="relative flex items-center">
+                      <FiSettings className="mr-3" size={18} />
+                      {/* Ping next to Status Bar tab if any status is true */}
+                      {statusPingColor && (
+                        <span
+                          className={`absolute top-0 right-0 w-3 h-3 rounded-full animate-ping ${statusPingColor}`}
+                        />
+                      )}
+                    </div>
+                    Status Bar
                   </button>
+
+                  <button
+                    onClick={() => handleViewChange('camera')}
+                    className={`flex items-center w-full px-4 py-3 rounded-lg transition-colors ${currentView === 'camera'
+                        ? 'bg-blue-100 text-blue-600 dark:bg-blue-900 dark:text-blue-200 font-medium'
+                        : 'text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700'
+                      }`}
+                  >
+                    <div className="relative flex items-center">
+                      <FiCamera className="mr-3" size={18} />
+                      {newPictureAvailable && (
+                        <span className="absolute top-0 right-0 w-2 h-2 bg-yellow-400 rounded-full animate-ping" />
+                      )}
+                    </div>
+                    Camera
+                  </button>
+
                 </div>
               </div>
             </motion.div>
@@ -104,33 +116,40 @@ const Header = ({ selectedGraph = 'temperature', onSelectGraph, onViewChange }) 
         )}
       </AnimatePresence>
 
-      {/* Main header */}
       <div className="container mx-auto px-4 py-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center">
-            <button 
-              onClick={() => setSidebarOpen(true)}
-              className="p-2 mr-3 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700"
-            >
-              <FiMenu size={24} className="text-gray-600 dark:text-gray-300" />
-            </button>
-            <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+            <div className="relative">
+              <button
+                onClick={() => setSidebarOpen(true)}
+                className="p-2 mr-3 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700"
+              >
+                <FiMenu size={24} className="text-gray-600 dark:text-gray-300" />
+              </button>
+
+              {/* Ping next to header menu icon */}
+              {newPictureAvailable && (
+                <span className="absolute top-1 right-1 w-3 h-3 bg-yellow-400 rounded-full animate-pulse" />
+              )}
+              {(batteryStatus === 3 || hitDetected) && (
+                <span className="absolute top-1 right-1 w-3 h-3 bg-red-600 rounded-full animate-pulse" />
+              )}
+              {hazard && (
+                <span className="absolute top-1 right-1 w-3 h-3 bg-purple-600 rounded-full animate-pulse" />
+              )}
+            </div>
+
+            <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-200 to-red-200 bg-clip-text text-transparent">
               Juggernaut pametna kaciga
             </h1>
           </div>
+
           <ThemeToggle />
         </div>
       </div>
-
-      {/* Graph Selector */}
-      {currentView === 'graphs' && (
-        <GraphSelector 
-          selectedGraph={selectedGraph} 
-          onSelectGraph={onSelectGraph} 
-        />
-      )}
     </header>
   );
 };
+
 
 export default Header;

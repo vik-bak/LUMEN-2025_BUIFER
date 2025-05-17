@@ -8,6 +8,7 @@ import {
 import { FaHardHat } from 'react-icons/fa';
 
 import { useBatteryStatus, useHitDetected, useHazard } from './useBatteryStatus';
+import MapComponent from './MapComponent'; 
 
 const Status = () => {
   const batteryStatus = useBatteryStatus();
@@ -55,6 +56,8 @@ const Status = () => {
         <Icon size={28} className={batteryStatus === 3 ? 'animate-pulse' : ''} />
         <span className="font-medium">{message}</span>
       </div>
+      <h3 className="text-lg mt-6 mb-2 text-gray-800 dark:text-gray-200">Last location acquired (Google Maps)</h3>
+      <MapComponent />
     </div>
   );
 };

@@ -101,6 +101,7 @@ void Usr_GpsL86GetValues(S_GPS_L86_DATA *gpsData_)
     gpsData_->timeDateBuf = gpsData.timeDateBuf;
     gpsData_->fixQualityID = gpsData.fixQualityID;
     gpsData_->altitudeInMeter = gpsData.altitudeInMeter;
+    gpsData_->fixedTime = gpsData.fixedTime;
     UsrGpsL86Init(&huart5);
 }
 

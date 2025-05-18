@@ -12,10 +12,10 @@
 ../Core/Src/main.c:721:13:MX_USART3_UART_Init	2
 ../Core/Src/main.c:754:13:MX_DMA_Init	1
 ../Core/Src/main.c:772:13:MX_GPIO_Init	1
-../Core/Src/main.c:836:7:measurements_task	5
-../Core/Src/main.c:895:7:sender_task	2
-../Core/Src/main.c:910:7:LED_task	3
-../Core/Src/main.c:928:7:HAL_GPIO_EXTI_Callback	4
-../Core/Src/main.c:941:8:square	1
-../Core/Src/main.c:955:6:HAL_TIM_PeriodElapsedCallback	2
-../Core/Src/main.c:973:6:Error_Handler	1
+../Core/Src/main.c:836:7:measurements_task	6
+../Core/Src/main.c:899:7:sender_task	2
+../Core/Src/main.c:914:7:LED_task	3
+../Core/Src/main.c:932:7:HAL_GPIO_EXTI_Callback	4
+../Core/Src/main.c:945:8:square	1
+../Core/Src/main.c:959:6:HAL_TIM_PeriodElapsedCallback	2
+../Core/Src/main.c:977:6:Error_Handler	1

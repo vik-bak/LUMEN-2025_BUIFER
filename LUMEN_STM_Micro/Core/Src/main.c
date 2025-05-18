@@ -216,7 +216,7 @@ int main(void)
 
   /* ------ TASK RELATED ------ */
   xTaskCreate(measurements_task, "measure", 1024, NULL, 3, &Measurements_Handler);
-  xTaskCreate(sender_task, "send data", 128, NULL, 2, &Sender_Handler);
+  xTaskCreate(sender_task, "send data", 1024, NULL, 2, &Sender_Handler);
   xTaskCreate(LED_task, "toggle LED", 128, NULL, 1, &LED_Handler);
 
 
@@ -854,6 +854,8 @@ static void MX_GPIO_Init(void)
 			measuredData.latitude = gpsData.lat;
 			measuredData.longitude = gpsData.lon;
 			measuredData.altitude = gpsData.altitudeInMeter;
+			//float gpsTimeSnapshot = gpsData.fixedTime;
+			//measuredData.time = gpsTimeSnapshot;
 			measuredData.time = gpsData.fixedTime;
 			accx = measuredData.accelZ;
 
@@ -884,11 +886,13 @@ static void MX_GPIO_Init(void)
 			unsigned long currentTime =  xTaskGetTickCount();
 
 			if( currentTime - lastSendTime >= sendInterval){
-			xQueueSend(Queue_Handler,&measuredData,portMAX_DELAY);
+			if(xQueueSend(Queue_Handler,&measuredData,portMAX_DELAY) == pdPASS){
+				flag = 1;
+			}
 			lastSendTime = currentTime;
 			}
 			watermark = uxTaskGetStackHighWaterMark(NULL);
-			vTaskDelay(pdMS_TO_TICKS(0.5));
+			vTaskDelay(pdMS_TO_TICKS(10));
 		}
 	}
 
@@ -899,10 +903,10 @@ static void MX_GPIO_Init(void)
 				char buffer[100];
 				sprintf(buffer,"%d %d \n", sendData.humidity, sendData.temperature);
 				//xSemaphoreTake(AlarmMutex_Handler,portMAX_DELAY);
-				HAL_UART_Transmit(&huart3,(uint8_t*)buffer, strlen(buffer), 50);
+				//HAL_UART_Transmit(&huart3,(uint8_t*)buffer, strlen(buffer), 50);
 				//xSemaphoreGive(AlarmMutex_Handler);
 			}
-			vTaskDelay(pdMS_TO_TICKS(0.5));
+			//vTaskDelay(pdMS_TO_TICKS(0.5));
 		}
 	}
 

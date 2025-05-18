@@ -205,7 +205,7 @@ int main(void)
   /* USER CODE BEGIN 2 */
 
   //HAL_GPIO_WritePin(GPIOA, GPIO_PIN_12, GPIO_PIN_SET);
-  //MPU6050_Init(&hi2c3);
+  MPU6050_Init(&hi2c3);
   UsrGpsL86Init(&huart5);
   /* ------ QUEUE RELATED ------ */
   Queue_Handler = xQueueCreate(2,sizeof(data));
@@ -838,7 +838,7 @@ static void MX_GPIO_Init(void)
 		{
 			shtc3_perform_measurements(&hi2c2, &temp, &hum);
 
-			//MPU6050_Read_All(&hi2c3, &imuData);
+			MPU6050_Read_All(&hi2c3, &imuData);
 
 			Usr_GpsL86GetValues(&gpsData);
 			//begin(&hadc1);

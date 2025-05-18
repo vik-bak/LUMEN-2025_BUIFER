@@ -888,7 +888,7 @@ static void MX_GPIO_Init(void)
 			lastSendTime = currentTime;
 			}
 			watermark = uxTaskGetStackHighWaterMark(NULL);
-			vTaskDelay(pdMS_TO_TICKS(20));
+			vTaskDelay(pdMS_TO_TICKS(0.5));
 		}
 	}
 
@@ -902,7 +902,7 @@ static void MX_GPIO_Init(void)
 				HAL_UART_Transmit(&huart3,(uint8_t*)buffer, strlen(buffer), 50);
 				//xSemaphoreGive(AlarmMutex_Handler);
 			}
-			vTaskDelay(pdMS_TO_TICKS(20));
+			vTaskDelay(pdMS_TO_TICKS(0.5));
 		}
 	}
 

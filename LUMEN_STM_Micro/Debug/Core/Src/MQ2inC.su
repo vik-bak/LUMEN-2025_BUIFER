@@ -1,0 +1,11 @@
+../Core/Src/MQ2inC.c:12:6:begin	16	static
+../Core/Src/MQ2inC.c:19:6:close	4	static
+../Core/Src/MQ2inC.c:26:6:checkCalibration	4	static
+../Core/Src/MQ2inC.c:35:8:read	16	static
+../Core/Src/MQ2inC.c:46:7:readLPG	16	static
+../Core/Src/MQ2inC.c:55:7:readCO	16	static
+../Core/Src/MQ2inC.c:64:7:readSmoke	16	static
+../Core/Src/MQ2inC.c:73:7:MQResistanceCalculation	32	static
+../Core/Src/MQ2inC.c:78:7:MQCalibration	24	static
+../Core/Src/MQ2inC.c:99:7:MQRead	24	static
+../Core/Src/MQ2inC.c:114:7:MQGetPercentage	32	static

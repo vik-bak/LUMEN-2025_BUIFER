@@ -1,6 +1,6 @@
 ../Core/Src/l86_gnss_parser.c:57:6:HAL_UART_RxCpltCallback	16	static
-../Core/Src/l86_gnss_parser.c:74:6:UsrGpsL86Init	16	static
-../Core/Src/l86_gnss_parser.c:81:6:Usr_GpsL86GetValues	16	static
-../Core/Src/l86_gnss_parser.c:104:10:getRmc	24	static
-../Core/Src/l86_gnss_parser.c:165:10:formatLatLong	16	static
-../Core/Src/l86_gnss_parser.c:176:10:getGGA	32	static
+../Core/Src/l86_gnss_parser.c:79:6:UsrGpsL86Init	16	static
+../Core/Src/l86_gnss_parser.c:86:6:Usr_GpsL86GetValues	16	static
+../Core/Src/l86_gnss_parser.c:109:10:getRmc	24	static
+../Core/Src/l86_gnss_parser.c:170:10:formatLatLong	16	static
+../Core/Src/l86_gnss_parser.c:181:10:getGGA	32	static

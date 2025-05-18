@@ -60,6 +60,11 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
     {
         g_GnssRx_Flag = true;
         g_openFixedDataTransmition = true;
+        //HAL_UART_Receive_DMA(&huart5, (uint8_t *)m_rxData, DMA_READ_DEF_SIZE);
+        if (__HAL_UART_GET_FLAG(&huart5, UART_FLAG_ORE))
+                {
+                    __HAL_UART_CLEAR_OREFLAG(&huart5); // Clear overrun
+                }
         //Usr_GpsL86GetValues(&gnss_data);
     }
     /*if (huart == &huart4)

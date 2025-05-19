@@ -25,6 +25,7 @@ const useTemperatureData = () => {
     useEffect(() => {
         const fetchData = async () => {
             const results = [];
+
             for (let i = 1; i <= 4; i++) {
                 const timeRef = ref(database, `data/${i}/gps_time`);
                 const tempRef = ref(database, `data2/${i}/hum`);
@@ -36,18 +37,27 @@ const useTemperatureData = () => {
 
                 const timeunix = timeSnap.val();
                 const temperature = tempSnap.val();
+
                 if (timeunix !== null && temperature !== null) {
-                    const date = new Date(timeunix * 1000);
-                    const time = date.toLocaleTimeString([], {
-                        hour: '2-digit',
-                        minute: '2-digit',
-                        hour12: false,
-                    });
-                    results.push({ time, temperature });
+                    results.push({ timeunix, temperature });
                 }
             }
 
-            setTemperatureData(results);
+            // Sort by the original unix timestamp
+            results.sort((a, b) => a.timeunix - b.timeunix);
+
+            // Format the timestamps into readable time
+            const formattedResults = results.map(({ timeunix, temperature }) => {
+                const date = new Date(timeunix * 1000);
+                const time = date.toLocaleTimeString([], {
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    hour12: false,
+                });
+                return { time, temperature };
+            });
+
+            setTemperatureData(formattedResults);
         };
 
         fetchData();

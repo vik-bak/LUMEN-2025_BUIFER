@@ -232,6 +232,7 @@ void setup() {
   }
   //initializeApp(aClient, app, getAuth(user_auth), processData, "🔐 authTask");  //Initialize Firebase app
   configF.api_key = Web_API_KEY;
+  configF.database_url = DATABASE_URL;
   auth.user.email = USER_EMAIL;
   auth.user.password = USER_PASS;
   Firebase.begin(&configF, &auth);
@@ -279,12 +280,18 @@ void acquireData(void *pvParameters){
     // Read data and display it
     Serial.println("Dosao");
     String message = mySerial.readStringUntil('\n');
-    //Serial.println("Received: " + message);
+    Serial.println(message);
     int result = sscanf(message.c_str(),"%d %d", &sendStruct.temp, &sendStruct.hum);
     char buffer[100];
     sprintf(buffer,"/data2/%d/temp",ink);
     //Database.set<int>(aClient,buffer,sendStruct.temp,processData,"RTDB_Send_Int");
-    Firebase.RTDB.setInt(&fbdo,buffer,sendStruct.temp);
+    //Firebase.RTDB.setInt(&fbdo,buffer,sendStruct.temp);
+    if (Firebase.RTDB.setInt(&fbdo, buffer, sendStruct.temp)) {
+      Serial.println("Data sent successfully");
+      } else {
+      Serial.print("Error sending data: ");
+      Serial.println(fbdo.errorReason());
+      }
     buffer[0] = '\0';
     sprintf(buffer,"/data2/%d/hum",ink);
     Firebase.RTDB.setInt(&fbdo,buffer,sendStruct.hum);

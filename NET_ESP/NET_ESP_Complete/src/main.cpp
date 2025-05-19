@@ -15,7 +15,7 @@
 // Provide the token generation process info.
 #include <addons/TokenHelper.h>
 #include "Arducam_Mega.h"
-
+#include <sys/time.h>
 
 
 #define WIFI_SSID "mihaNetwork"             //WiFi credentials for phone hotspot to connect ESP to net
@@ -38,7 +38,7 @@
 #define FILE_PHOTO_PATH "/photo.jpg"
 
 
-#define MAX_IMAGE_SIZE 76000
+#define MAX_IMAGE_SIZE 65536   //provjerit dali dalje radi cam acqusition
 
 CAM_IMAGE_MODE imageMode = CAM_IMAGE_MODE_SVGA;
 
@@ -88,6 +88,9 @@ sensorData rcvStruct;
 TaskHandle_t acqHandle;
 TaskHandle_t cameraHandle;
 SemaphoreHandle_t camSemaphoreHandle;
+
+
+
 
 int ink = 1;
 
@@ -205,6 +208,11 @@ void setup() {
   while (true)
     ; // halt
 }
+  /*struct timeval tv;
+  tv.tv_sec =   1601216683;  // enter UTC UNIX time (get it from https://www.unixtimestamp.com )
+  settimeofday(&tv, NULL);
+  setenv("TZ", "CET-1CEST,M3.5.0/2,M10.5.0/ 3", 1); // https://www.gnu.org/software/libc/manual/html_node/TZ-Variable.html
+  tzset();*/
 
   WiFi.begin(WIFI_SSID, WIFI_PASSWORD);  //Connecting to WiFi
   Serial.print("Connecting to Wi-Fi");
@@ -227,9 +235,13 @@ void setup() {
   ssl_client.setTimeout(1000);
   ssl_client.setHandshakeTimeout(5);*/
   configTime(0, 0, "pool.ntp.org", "time.nist.gov");
+  time_t now = 0;
   while (time(nullptr) < 100000) {
+    time(&now);
   //delay(100);
   }
+  setenv("TZ", "CET-1CEST,M3.5.0/2,M10.5.0/3", 1);  // Optional: Set timezone
+  tzset();
   //initializeApp(aClient, app, getAuth(user_auth), processData, "🔐 authTask");  //Initialize Firebase app
   configF.api_key = Web_API_KEY;
   configF.database_url = DATABASE_URL;
@@ -237,6 +249,11 @@ void setup() {
   auth.user.password = USER_PASS;
   Firebase.begin(&configF, &auth);
   Firebase.reconnectWiFi(true);
+  Serial.println("Waiting for Firebase token...");
+  while (!Firebase.ready()) {
+  delay(100);
+  }
+  Serial.println("Firebase is ready!");
   //app.getApp<RealtimeDatabase>(Database);   //Set the database object defined earlier as database for firebase app
   //Database.url(DATABASE_URL);  //Set the URL to the database
   camSemaphoreHandle = xSemaphoreCreateBinary();
@@ -281,7 +298,8 @@ void acquireData(void *pvParameters){
     Serial.println("Dosao");
     String message = mySerial.readStringUntil('\n');
     Serial.println(message);
-    int result = sscanf(message.c_str(),"%d %d", &sendStruct.temp, &sendStruct.hum);
+  
+    int result = sscanf(message.c_str(),"%d %d", &sendStruct.hum, &sendStruct.temp);
     char buffer[100];
     sprintf(buffer,"/data2/%d/temp",ink);
     //Database.set<int>(aClient,buffer,sendStruct.temp,processData,"RTDB_Send_Int");
@@ -295,6 +313,22 @@ void acquireData(void *pvParameters){
     buffer[0] = '\0';
     sprintf(buffer,"/data2/%d/hum",ink);
     Firebase.RTDB.setInt(&fbdo,buffer,sendStruct.hum);
+    time_t now;
+    struct tm timeDetails;
+    time(&now);
+    localtime_r(&now, &timeDetails);
+    Serial.println(&timeDetails, "%A, %B %d %Y %H:%M:%S");
+    buffer[0] = '\0';
+    sprintf(buffer,"/data2/%d/time",ink);
+    char timeBuffer[40];
+    sprintf(timeBuffer, "%02d:%02d:%02d", timeDetails.tm_hour, timeDetails.tm_min, timeDetails.tm_sec);
+    if(Firebase.RTDB.setString(&fbdo,buffer,timeBuffer)){
+      Serial.println("Data sent successfully");
+      } else {
+      Serial.print("Error sending data: ");
+      Serial.println(fbdo.errorReason());
+      }
+  
     if (ink < 5){
       ink++;
       } else ink = 1;

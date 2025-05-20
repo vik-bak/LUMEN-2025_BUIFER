@@ -64,6 +64,7 @@ I2C_HandleTypeDef hi2c2;
 I2C_HandleTypeDef hi2c3;
 
 TIM_HandleTypeDef htim1;
+TIM_HandleTypeDef htim3;
 
 UART_HandleTypeDef huart5;
 UART_HandleTypeDef huart1;
@@ -76,6 +77,7 @@ DMA_HandleTypeDef hdma_uart5_rx;
 static int32_t temp;
 static int32_t hum;
 static int flag = 0;
+static int state = 0;
 typedef struct {
 
 	int32_t temperature;
@@ -126,6 +128,7 @@ static void MX_USART3_UART_Init(void);
 static void MX_TIM1_Init(void);
 static void MX_USART1_UART_Init(void);
 static void MX_ADC2_Init(void);
+static void MX_TIM3_Init(void);
 
 
 /* USER CODE BEGIN PFP */
@@ -202,11 +205,14 @@ int main(void)
   MX_TIM1_Init();
   MX_USART1_UART_Init();
   MX_ADC2_Init();
+  MX_TIM3_Init();
   /* USER CODE BEGIN 2 */
 
   //HAL_GPIO_WritePin(GPIOA, GPIO_PIN_12, GPIO_PIN_SET);
+  HAL_GPIO_WritePin(GPIOB,GPIO_PIN_14,GPIO_PIN_SET);
   MPU6050_Init(&hi2c3);
   UsrGpsL86Init(&huart5);
+  //begin(&hadc1);
   /* ------ QUEUE RELATED ------ */
   Queue_Handler = xQueueCreate(2,sizeof(data));
   if (Queue_Handler == NULL) {
@@ -609,6 +615,55 @@ static void MX_TIM1_Init(void)
 }
 
 /**
+  * @brief TIM3 Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_TIM3_Init(void)
+{
+
+  /* USER CODE BEGIN TIM3_Init 0 */
+
+  /* USER CODE END TIM3_Init 0 */
+
+  TIM_MasterConfigTypeDef sMasterConfig = {0};
+  TIM_OC_InitTypeDef sConfigOC = {0};
+
+  /* USER CODE BEGIN TIM3_Init 1 */
+
+  /* USER CODE END TIM3_Init 1 */
+  htim3.Instance = TIM3;
+  htim3.Init.Prescaler = 7;
+  htim3.Init.CounterMode = TIM_COUNTERMODE_UP;
+  htim3.Init.Period = 49999;
+  htim3.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
+  htim3.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
+  if (HAL_TIM_PWM_Init(&htim3) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  sMasterConfig.MasterOutputTrigger = TIM_TRGO_RESET;
+  sMasterConfig.MasterSlaveMode = TIM_MASTERSLAVEMODE_DISABLE;
+  if (HAL_TIMEx_MasterConfigSynchronization(&htim3, &sMasterConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  sConfigOC.OCMode = TIM_OCMODE_PWM1;
+  sConfigOC.Pulse = 0;
+  sConfigOC.OCPolarity = TIM_OCPOLARITY_HIGH;
+  sConfigOC.OCFastMode = TIM_OCFAST_DISABLE;
+  if (HAL_TIM_PWM_ConfigChannel(&htim3, &sConfigOC, TIM_CHANNEL_1) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN TIM3_Init 2 */
+  HAL_TIM_PWM_Start(&htim3, TIM_CHANNEL_1);
+  /* USER CODE END TIM3_Init 2 */
+  HAL_TIM_MspPostInit(&htim3);
+
+}
+
+/**
   * @brief UART5 Initialization Function
   * @param None
   * @retval None
@@ -804,6 +859,12 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(BAT_FULL_GPIO_Port, &GPIO_InitStruct);
 
+  /*Configure GPIO pin : PA4 */
+  GPIO_InitStruct.Pin = GPIO_PIN_4;
+  GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
+
   /*Configure GPIO pins : LD2_Pin PA12 BAT_LOW_Pin */
   GPIO_InitStruct.Pin = LD2_Pin|GPIO_PIN_12|BAT_LOW_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
@@ -825,6 +886,9 @@ static void MX_GPIO_Init(void)
   HAL_GPIO_Init(BOOST_ENABLE_GPIO_Port, &GPIO_InitStruct);
 
   /* EXTI interrupt init*/
+  HAL_NVIC_SetPriority(EXTI4_IRQn, 5, 0);
+  HAL_NVIC_EnableIRQ(EXTI4_IRQn);
+
   HAL_NVIC_SetPriority(EXTI15_10_IRQn, 5, 0);
   HAL_NVIC_EnableIRQ(EXTI15_10_IRQn);
 
@@ -842,6 +906,7 @@ static void MX_GPIO_Init(void)
 
 			Usr_GpsL86GetValues(&gpsData);
 			//begin(&hadc1);
+
 
 			measuredData.lpg = readLPG(&hadc1);
 			measuredData.smoke = readSmoke(&hadc1);
@@ -867,7 +932,7 @@ static void MX_GPIO_Init(void)
 			accel = sqrt(square(imuData.Ax) + square(imuData.Ay) + square(imuData.Az));
 			if (accel >= 2.0){
 				char buffer[100];
-				sprintf(buffer, "HIT DETECTED \n");
+				sprintf(buffer, "30 \n");
 				HAL_UART_Transmit(&huart3,(uint8_t*)buffer, strlen(buffer), 50);
 			}
 
@@ -875,6 +940,7 @@ static void MX_GPIO_Init(void)
 				char buffer[100];
 				sprintf(buffer,"10 \n");
 				HAL_UART_Transmit(&huart1,(uint8_t*)buffer,strlen(buffer), 50);
+				//HAL_UART_Transmit(&huart3,(uint8_t*)buffer,strlen(buffer), 50);
 			}
 
 			if (measuredData.batStatus >= batMaxVoltage){
@@ -903,7 +969,7 @@ static void MX_GPIO_Init(void)
 				char buffer[100];
 				sprintf(buffer,"%d %d \n", sendData.humidity, sendData.temperature);
 				//xSemaphoreTake(AlarmMutex_Handler,portMAX_DELAY);
-				//HAL_UART_Transmit(&huart3,(uint8_t*)buffer, strlen(buffer), 50);
+				HAL_UART_Transmit(&huart3,(uint8_t*)buffer, strlen(buffer), 50);
 				//xSemaphoreGive(AlarmMutex_Handler);
 			}
 			//vTaskDelay(pdMS_TO_TICKS(0.5));
@@ -916,21 +982,37 @@ static void MX_GPIO_Init(void)
 		while(1){
 			if(xSemaphoreTake(PWM_Sem_Handler,portMAX_DELAY) == pdTRUE){
 
-			    	if(duty_cycle < 0.5){
-			    		duty_cycle = 0.5;
-			    		cmp_reg = duty_cycle * htim1.Init.Period;
-			    		__HAL_TIM_SET_COMPARE(&htim1,TIM_CHANNEL_1,cmp_reg);
-			    	}else{
-			    		duty_cycle = 0;
-			    		cmp_reg = duty_cycle * htim1.Init.Period;
-			    		__HAL_TIM_SET_COMPARE(&htim1,TIM_CHANNEL_1,cmp_reg);
-			    	}
+				if (state < 4){
+							state++;
+						}else state = 0;
+					switch(state){
+							  case 0:
+								  cmp_reg = 0;
+								  __HAL_TIM_SET_COMPARE(&htim3,TIM_CHANNEL_1,cmp_reg);
+								  break;
+							  case 1:
+								  cmp_reg = 0.25 * htim3.Init.Period;
+								  __HAL_TIM_SET_COMPARE(&htim3,TIM_CHANNEL_1,cmp_reg);
+								  break;
+							  case 2:
+								  cmp_reg = 0.5 * htim3.Init.Period;
+								  __HAL_TIM_SET_COMPARE(&htim3,TIM_CHANNEL_1,cmp_reg);
+								  break;
+							  case 3:
+								  cmp_reg = 0.75 * htim3.Init.Period;
+								  __HAL_TIM_SET_COMPARE(&htim3,TIM_CHANNEL_1,cmp_reg);
+								  break;
+							  case 4:
+								  cmp_reg = 1 * htim3.Init.Period;
+								  __HAL_TIM_SET_COMPARE(&htim3,TIM_CHANNEL_1,cmp_reg);
+								  break;
+					}
 		}
 	}
 	}
 
 	void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin){
-		if(GPIO_Pin == B1_Pin){
+		if(GPIO_Pin == GPIO_PIN_4){
 		  BaseType_t task_woken = pdFALSE;
 		  xSemaphoreGiveFromISR(PWM_Sem_Handler,&task_woken);
 
@@ -945,6 +1027,7 @@ static void MX_GPIO_Init(void)
 	float square(float number){
 		return number*number;
 	}
+
 /* USER CODE END 4 */
 
 

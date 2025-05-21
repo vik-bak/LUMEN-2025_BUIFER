@@ -74,6 +74,8 @@ void Error_Handler(void);
 #define USART_RX_GPIO_Port GPIOA
 #define LD2_Pin GPIO_PIN_5
 #define LD2_GPIO_Port GPIOA
+#define FSR_Pin GPIO_PIN_4
+#define FSR_GPIO_Port GPIOC
 #define BAT_SENSE_Pin GPIO_PIN_5
 #define BAT_SENSE_GPIO_Port GPIOC
 #define GAS_ADC_Pin GPIO_PIN_1

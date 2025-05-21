@@ -31,7 +31,7 @@
 
 //C includes
 #include "string.h"
-
+#include "stdbool.h"
 //FreeRTOS includes
 #include "FreeRTOS.h"
 #include "task.h"
@@ -104,8 +104,12 @@ static UBaseType_t watermark;
 static MPU6050_t imuData;
 
 static S_GPS_L86_DATA gpsData;
-static float batMaxVoltage = 4.2;
-static float voltageThreshold = 3.5;
+static bool sameValueLow = false;
+static bool sameValueMedium = false;
+static bool sameValueHigh = false;
+//static float batMaxVoltage = 4.2;
+static float voltageThresholdMaximum = 3.9;
+static float voltageThresholdMinimum = 3.5;
 
 static float acc_threshold = 20*G_CONSTANT;
 static float accx;
@@ -212,7 +216,7 @@ int main(void)
   HAL_GPIO_WritePin(GPIOB,GPIO_PIN_14,GPIO_PIN_SET);
   MPU6050_Init(&hi2c3);
   UsrGpsL86Init(&huart5);
-  //begin(&hadc1);
+  begin(&hadc1);
   /* ------ QUEUE RELATED ------ */
   Queue_Handler = xQueueCreate(2,sizeof(data));
   if (Queue_Handler == NULL) {
@@ -235,6 +239,7 @@ int main(void)
 
   vTaskStartScheduler();
   /* USER CODE END 2 */
+
 
   /* We should never get here as control is now taken by the scheduler */
   /* Infinite loop */
@@ -905,7 +910,7 @@ static void MX_GPIO_Init(void)
 			MPU6050_Read_All(&hi2c3, &imuData);
 
 			Usr_GpsL86GetValues(&gpsData);
-			//begin(&hadc1);
+			begin(&hadc1);
 
 
 			measuredData.lpg = readLPG(&hadc1);
@@ -930,23 +935,46 @@ static void MX_GPIO_Init(void)
 			HAL_ADC_Stop(&hadc2);*/
 
 			accel = sqrt(square(imuData.Ax) + square(imuData.Ay) + square(imuData.Az));
-			if (accel >= 2.0){
+			if (accel >= 2.0 ){
 				char buffer[100];
-				sprintf(buffer, "30 \n");
+				sprintf(buffer, "11\n");
 				HAL_UART_Transmit(&huart3,(uint8_t*)buffer, strlen(buffer), 50);
 			}
 
-			if (measuredData.batStatus <= voltageThreshold){
+			if (measuredData.batStatus <= voltageThresholdMinimum && !sameValueLow){
 				char buffer[100];
-				sprintf(buffer,"10 \n");
+				sprintf(buffer,"10\n");
 				HAL_UART_Transmit(&huart1,(uint8_t*)buffer,strlen(buffer), 50);
-				//HAL_UART_Transmit(&huart3,(uint8_t*)buffer,strlen(buffer), 50);
+				HAL_UART_Transmit(&huart3,(uint8_t*)buffer,strlen(buffer), 50);
+				sameValueLow = true;
+				sameValueMedium = false;
+				sameValueHigh = false;
 			}
 
-			if (measuredData.batStatus >= batMaxVoltage){
+			if (measuredData.batStatus >= voltageThresholdMinimum && measuredData.batStatus <= voltageThresholdMaximum && !sameValueMedium){
 				char buffer[100];
-				sprintf(buffer,"20 \n");
+				sprintf(buffer,"20\n");
 				HAL_UART_Transmit(&huart1,(uint8_t*)buffer,strlen(buffer), 50);
+				HAL_UART_Transmit(&huart3,(uint8_t*)buffer,strlen(buffer), 50);
+				sameValueLow = false;
+				sameValueMedium = true;
+				sameValueHigh = false;
+			}
+
+			if (measuredData.batStatus >= voltageThresholdMaximum && !sameValueHigh){
+				char buffer[100];
+				sprintf(buffer,"30\n");
+				HAL_UART_Transmit(&huart1,(uint8_t*)buffer,strlen(buffer), 50);
+				HAL_UART_Transmit(&huart3,(uint8_t*)buffer,strlen(buffer), 50);
+				sameValueLow = false;
+				sameValueMedium = false;
+				sameValueHigh = true;
+			}
+
+			if (HAL_GPIO_ReadPin(GPIOB, GPIO_PIN_2)){
+				char buffer[100];
+				sprintf(buffer,"40\n");
+				HAL_UART_Transmit(&huart3,(uint8_t*)buffer,strlen(buffer), 50);
 			}
 
 			unsigned long currentTime =  xTaskGetTickCount();

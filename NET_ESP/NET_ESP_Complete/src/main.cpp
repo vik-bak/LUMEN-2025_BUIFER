@@ -52,6 +52,8 @@ FirebaseAuth auth;
 FirebaseConfig configF;
 
 bool taskCompleted = false;
+bool flagReceived = false;
+bool sendingPicture = false;
 size_t imageSize = 0;
 
 uint8_t imageBuffer[MAX_IMAGE_SIZE];
@@ -70,8 +72,8 @@ uint8_t imageBuffer[MAX_IMAGE_SIZE];
 const char *ssid = "mihaNetwork";
 const char *charpassword = "uhms9878";
 
-#define TXD1 12          //UART for connecting STM32 to ESP for receieving sensor data
-#define RXD1 13
+#define TXD1 25          //UART for connecting STM32 to ESP for receieving sensor data
+#define RXD1 26
 
 #define BUTTON_GPIO GPIO_NUM_32
 
@@ -295,10 +297,52 @@ void acquireData(void *pvParameters){
 
   if(mySerial.available() > 0) {
     // Read data and display it
+    while(taskCompleted){
+      vTaskDelay(pdMS_TO_TICKS(1));
+    }
     Serial.println("Dosao");
     String message = mySerial.readStringUntil('\n');
+    message.trim();
+    if (message == "11"){
+      Serial.println("aa hit");
+      char buffer[100];
+      sprintf(buffer,"/hit_detected");
+      Firebase.RTDB.setBool(&fbdo,buffer,true);
+      flagReceived = true;
+    }
+    if (message == "10"){
+      char buffer[100];
+      sprintf(buffer,"/bat_status");
+      Firebase.RTDB.setInt(&fbdo,buffer,3);
+      flagReceived = true;
+    }
+    if (message == "20"){
+      char buffer[100];
+      sprintf(buffer,"/bat_status");
+      Firebase.RTDB.setInt(&fbdo,buffer,2);
+      flagReceived = true;
+    }
+    if (message == "30"){
+      char buffer[100];
+      sprintf(buffer,"/bat_status");
+      Firebase.RTDB.setInt(&fbdo,buffer,1);
+      flagReceived = true;
+    }
+    if (message == "50"){
+      char buffer[100];
+      sprintf(buffer,"/helmet_on");
+      Firebase.RTDB.setBool(&fbdo,buffer,true);
+      flagReceived = true;
+    }
+     if (message == "60"){
+      char buffer[100];
+      sprintf(buffer,"/helmet_on");
+      Firebase.RTDB.setBool(&fbdo,buffer,false);
+      flagReceived = true;
+    }
     Serial.println(message);
-  
+
+    if(!flagReceived){
     int result = sscanf(message.c_str(),"%d %d", &sendStruct.hum, &sendStruct.temp);
     char buffer[100];
     sprintf(buffer,"/data2/%d/temp",ink);
@@ -333,6 +377,8 @@ void acquireData(void *pvParameters){
       ink++;
       } else ink = 1;
     //xQueueSend(queueHandle,&sendStruct,portMAX_DELAY);
+    }
+    flagReceived = false;
   }
   vTaskDelay(pdMS_TO_TICKS(20));
   }
@@ -343,6 +389,9 @@ void cameraTask(void *pvParameters){
   for(;;){
       if(xSemaphoreTake(camSemaphoreHandle,portMAX_DELAY) == pdPASS){
         vTaskDelay(pdMS_TO_TICKS(200));
+        char buffer[100];
+        sprintf(buffer,"/new_picture");
+        Firebase.RTDB.setBool(&fbdo,buffer,true);
         Serial.println("Picture taken");
         captureCallbackFunction();
         //app.loop();

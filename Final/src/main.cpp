@@ -107,7 +107,7 @@ void loop()
         counter++;
         static int battery_low = 1;
           xQueueSend(counterQueue, &counter, 5);
-          xQueueSend(counterQueue, &battery_low, 5);
+          xQueueSend(soundQueue, &battery_low, 5);
               wav_output_battery_low->start(I2S_NUM_1, i2s_wav_pins, wav_sample_battery_low);
       
        
@@ -115,7 +115,7 @@ void loop()
         counter++;
         static int power_on = 2;
               xQueueSend(counterQueue, &counter, 5);
-              xQueueSend(counterQueue, &power_on, 5);
+              xQueueSend(soundQueue, &power_on, 5);
               wav_output_power_on->start(I2S_NUM_1, i2s_wav_pins, wav_sample_power_on);
 
        }

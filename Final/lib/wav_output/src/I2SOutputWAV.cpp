@@ -21,6 +21,7 @@ void i2sWriterTask(void *param)
     Frame_t *frames = (Frame_t *)malloc(sizeof(Frame_t) * NUM_FRAMES_TO_SEND);
     while (true)
     {
+        xQueueReceive(soundQueue, &sound_number, 0);
         
         // wait for some data to be requested
         i2s_event_t evt;
@@ -60,8 +61,9 @@ void i2sWriterTask(void *param)
                     //     Serial.println("Killing task");
                     //     vTaskDelete(NULL);
                     // }
-                    //xQueueReceive(soundQueue, &sound_number, 0);
+                    
                     Serial2.print("Sound number: ");
+                    Serial2.print(sound_number);
                     /*********/
                     counter++;
                     /********** */

@@ -19,8 +19,14 @@ i2s_pin_config_t i2s_wav_pins = {
 Application *application;
 //Added a semaphore to control the access to the serial port
 SemaphoreHandle_t xSemaphoreMain = NULL; // Create semaphore handle
-SampleSource *wav_sample_source;
+SampleSource *wav_sample_battery_low;
+SampleSource *wav_sample_power_on;
+SampleSource *wav_sample_toxic_gas;
+SampleSource *wav_sample_high_temeperature;
+
 I2SOutputWAV *wav_output;
+
+
 File m_file;
 QueueHandle_t counterQueue = NULL;
 QueueHandle_t passQueue = NULL;
@@ -34,7 +40,12 @@ void setup()
   SPIFFS.begin();
 
   Serial.println("Created sample source");
-  wav_sample_source = new WAVFileReader("/ddd.wav");
+  wav_sample_battery_low = new WAVFileReader("/battery_low.wav");
+  wav_sample_power_on = new WAVFileReader("/power_on.wav");
+  wav_sample_toxic_gas = new WAVFileReader("/toxic_gas.wav");
+  wav_sample_high_temeperature = new WAVFileReader("/high_temperature.wav");
+
+
 
   wav_output = new I2SOutputWAV();
   
@@ -88,12 +99,21 @@ void loop()
         counter++;
           xQueueSend(counterQueue, &counter, 5);
               //Simulate some work in the high priority task
-              wav_output->start(I2S_NUM_1, i2s_wav_pins, wav_sample_source);
-              
-              
+              wav_output->start(I2S_NUM_1, i2s_wav_pins, wav_sample_battery_low);
       
-      
-      }
+       
+       } else if (input == "40") {
+
+              wav_output->start(I2S_NUM_1, i2s_wav_pins, wav_sample_power_on);
+
+       }
+       else if (input == "50") {
+              wav_output->start(I2S_NUM_1, i2s_wav_pins, wav_sample_toxic_gas);
+       }
+
+       else if (input == "60") {
+              wav_output->start(I2S_NUM_1, i2s_wav_pins, wav_sample_high_temeperature);
+       }
       
       
     }

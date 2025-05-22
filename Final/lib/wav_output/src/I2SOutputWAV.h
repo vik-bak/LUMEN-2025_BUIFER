@@ -6,6 +6,7 @@
 
 class SampleSource;
 extern QueueHandle_t passQueue;
+extern QueueHandle_t soundQueue;
 /**
  * Base Class for both the ADC and I2S sampler
  **/
@@ -20,6 +21,8 @@ private:
     i2s_port_t m_i2sPort;
     // src of samples for us to play
     SampleSource *m_sample_generator;
+
+    
 
 public:
     

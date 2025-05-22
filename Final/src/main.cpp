@@ -24,12 +24,16 @@ SampleSource *wav_sample_power_on;
 SampleSource *wav_sample_toxic_gas;
 SampleSource *wav_sample_high_temeperature;
 
-I2SOutputWAV *wav_output;
+I2SOutputWAV *wav_output_battery_low;
+I2SOutputWAV *wav_output_power_on;
+I2SOutputWAV *wav_output_toxic_gas;
+I2SOutputWAV *wav_output_high_temeperature;
 
 
 File m_file;
 QueueHandle_t counterQueue = NULL;
 QueueHandle_t passQueue = NULL;
+QueueHandle_t soundQueue = NULL;
 void setup()
 {
   // put your setup code here, to run once:
@@ -47,7 +51,10 @@ void setup()
 
 
 
-  wav_output = new I2SOutputWAV();
+  wav_output_battery_low = new I2SOutputWAV();
+  wav_output_power_on = new I2SOutputWAV();
+  wav_output_toxic_gas = new I2SOutputWAV();
+  wav_output_high_temeperature = new I2SOutputWAV();
   
   delay(1000);
   int coreCount = ESP.getChipCores();
@@ -67,6 +74,7 @@ void setup()
   //Create a queue to hold the counter value
   counterQueue = xQueueCreate(10, sizeof(int));
   passQueue = xQueueCreate(10, sizeof(int));
+  soundQueue = xQueueCreate(10, sizeof(int));
   if (counterQueue == NULL) {
     Serial.println("Failed to create queue");
   } else {
@@ -97,22 +105,34 @@ void loop()
 
       if (input == "20") {
         counter++;
+        static int battery_low = 1;
           xQueueSend(counterQueue, &counter, 5);
-              //Simulate some work in the high priority task
-              wav_output->start(I2S_NUM_1, i2s_wav_pins, wav_sample_battery_low);
+          xQueueSend(counterQueue, &battery_low, 5);
+              wav_output_battery_low->start(I2S_NUM_1, i2s_wav_pins, wav_sample_battery_low);
       
        
        } else if (input == "40") {
-
-              wav_output->start(I2S_NUM_1, i2s_wav_pins, wav_sample_power_on);
+        counter++;
+        static int power_on = 2;
+              xQueueSend(counterQueue, &counter, 5);
+              xQueueSend(counterQueue, &power_on, 5);
+              wav_output_power_on->start(I2S_NUM_1, i2s_wav_pins, wav_sample_power_on);
 
        }
        else if (input == "50") {
-              wav_output->start(I2S_NUM_1, i2s_wav_pins, wav_sample_toxic_gas);
+        counter++;
+        static int toxic_gas = 3;
+              xQueueSend(counterQueue, &counter, 5);
+              xQueueSend(soundQueue, &toxic_gas, 5);
+              wav_output_toxic_gas->start(I2S_NUM_1, i2s_wav_pins, wav_sample_toxic_gas);
        }
 
        else if (input == "60") {
-              wav_output->start(I2S_NUM_1, i2s_wav_pins, wav_sample_high_temeperature);
+        counter++;
+        static int high_temperature = 4;
+            xQueueSend(counterQueue, &counter, 5);
+            xQueueSend(soundQueue, &high_temperature, 5);
+              wav_output_high_temeperature->start(I2S_NUM_1, i2s_wav_pins, wav_sample_high_temeperature);
        }
       
       

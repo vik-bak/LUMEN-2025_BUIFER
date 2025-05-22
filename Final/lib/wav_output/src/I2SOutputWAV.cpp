@@ -13,7 +13,7 @@
 
 void i2sWriterTask(void *param)
 {
-    
+    int sound_number = 0;
     I2SOutputWAV *output = (I2SOutputWAV *)param;
     int availableBytes = 0;
     int buffer_position = 0;
@@ -21,6 +21,7 @@ void i2sWriterTask(void *param)
     Frame_t *frames = (Frame_t *)malloc(sizeof(Frame_t) * NUM_FRAMES_TO_SEND);
     while (true)
     {
+        
         // wait for some data to be requested
         i2s_event_t evt;
         if (xQueueReceive(output->m_i2sQueue, &evt, portMAX_DELAY) == pdPASS)
@@ -59,8 +60,11 @@ void i2sWriterTask(void *param)
                     //     Serial.println("Killing task");
                     //     vTaskDelete(NULL);
                     // }
-                    
+                    //xQueueReceive(soundQueue, &sound_number, 0);
+                    Serial2.print("Sound number: ");
+                    /*********/
                     counter++;
+                    /********** */
                     //print we value of the counter
                     Serial.print("Counter: ");
                     Serial.print(counter);

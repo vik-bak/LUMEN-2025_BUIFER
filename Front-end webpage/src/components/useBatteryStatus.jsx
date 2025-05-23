@@ -56,5 +56,37 @@ const useHazard = () => {
 
     return hazard;
 };
+const useHighTemp = () => {
+    const [highTemp, setHighTemp] = useState(false);
 
-export { useBatteryStatus, useHitDetected, useHazard };
+    useEffect(() => {
+        const highTempRef = ref(database, 'high_temperature');
+
+        const unsubscribe = onValue(highTempRef, (snapshot) => {
+            const value = snapshot.val();
+            setHighTemp(value === true);
+        });
+
+        return () => unsubscribe();
+    }, []);
+
+    return highTemp;
+};
+const helmetOn = () => {
+    const [helmet, setHelmet] = useState(false);
+
+    useEffect(() => {
+        const helmetRef = ref(database, 'helmet_on');
+
+        const unsubscribe = onValue(helmetRef, (snapshot) => {
+            const value = snapshot.val();
+            setHelmet(value === true);
+        });
+
+        return () => unsubscribe();
+    }, []);
+
+    return helmet;
+};
+
+export { useBatteryStatus, useHitDetected, useHazard, helmetOn, useHighTemp };

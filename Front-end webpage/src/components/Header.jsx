@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { FiMenu, FiX, FiBarChart2, FiSettings, FiCamera } from 'react-icons/fi';
 import ThemeToggle from './ThemeToggle';
 import { useTemperatureData, useNewPicture } from './FetchingTempData';
-import { useBatteryStatus, useHitDetected, useHazard } from './useBatteryStatus';
+import { useBatteryStatus, useHitDetected, useHazard, useHighTemp } from './useBatteryStatus';
 
 
 
@@ -21,6 +21,7 @@ const Header = ({ onViewChange }) => {
   const batteryStatus = useBatteryStatus();
   const hitDetected = useHitDetected();
   const hazard = useHazard();
+  const highTemp = useHighTemp();
 
   // Determine ping colors for status bar icon
   // Priority: hitDetected/red, batteryStatus red, hazard purple
@@ -28,6 +29,7 @@ const Header = ({ onViewChange }) => {
   if (hitDetected) statusPingColor = 'bg-red-600';
   else if (batteryStatus === 3) statusPingColor = 'bg-red-600';
   else if (hazard) statusPingColor = 'bg-purple-600';
+  else if (highTemp) statusPingColor = 'bg-orange-400';
 
   return (
     <header className="bg-white dark:bg-gray-900 shadow-lg">
@@ -137,10 +139,13 @@ const Header = ({ onViewChange }) => {
               {hazard && (
                 <span className="absolute top-1 right-1 w-3 h-3 bg-purple-600 rounded-full animate-pulse" />
               )}
+              {highTemp && (
+                <span className="absolute top-1 right-1 w-3 h-3 bg-yellow-600 rounded-full animate-pulse" />
+              )}
             </div>
 
             <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-200 to-red-200 bg-clip-text text-transparent">
-              Juggernaut pametna kaciga
+              Juggernaut smart helmet
             </h1>
           </div>
 

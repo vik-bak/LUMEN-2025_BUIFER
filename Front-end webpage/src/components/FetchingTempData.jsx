@@ -25,49 +25,39 @@ const useTemperatureData = () => {
     useEffect(() => {
         const fetchData = async () => {
             const results = [];
-
+        
             for (let i = 1; i <= 4; i++) {
-                const timeRef = ref(database, `data/${i}/gps_time`);
-                const tempRef = ref(database, `data2/${i}/hum`);
-
+                const timeRef = ref(database, `data2/${i}/time`);
+                const tempRef = ref(database, `data2/${i}/temp`);
                 const [timeSnap, tempSnap] = await Promise.all([
                     get(timeRef),
                     get(tempRef),
                 ]);
 
-                const timeunix = timeSnap.val();
-                const temperature = tempSnap.val();
+                const timeStr = timeSnap.val(); // now a string like "13:31:49"
+                const temperatureRaw = tempSnap.val();
 
-                if (timeunix !== null && temperature !== null) {
-                    results.push({ timeunix, temperature });
+                if (timeStr !== null && temperatureRaw !== null) {
+                    // Convert temperature to real value
+                    const temperature = temperatureRaw / 100;
+                    results.push({ time: timeStr, temperature });
                 }
             }
 
-            // Sort by the original unix timestamp
-            results.sort((a, b) => a.timeunix - b.timeunix);
+            // Sort by time string ("HH:MM:SS") lexicographically
+            results.sort((a, b) => a.time.localeCompare(b.time));
 
-            // Format the timestamps into readable time
-            const formattedResults = results.map(({ timeunix, temperature }) => {
-                const date = new Date(timeunix * 1000);
-                const time = date.toLocaleTimeString([], {
-                    hour: '2-digit',
-                    minute: '2-digit',
-                    hour12: false,
-                });
-                return { time, temperature };
-            });
-
-            setTemperatureData(formattedResults);
+            setTemperatureData(results);
         };
 
         fetchData();
         const interval = setInterval(fetchData, 1000);
 
-        return () => clearInterval(interval); 
-
+        return () => clearInterval(interval);
     }, []);
 
     return temperatureData;
 };
+
 
 export {useTemperatureData, useNewPicture};

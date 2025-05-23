@@ -14,7 +14,7 @@ const PressureChart = ({ data }) => {
   return (
     <div className="bg-white p-6 rounded-lg shadow-md dark:bg-gray-700 transition-all">
       <h2 className="text-xl font-semibold mb-4 text-gray-900 dark:text-gray-200">
-        Smoke (%) - Multiple Sensors
+        Smoke (ppm) - Multiple Sensors
       </h2>
       <ResponsiveContainer width="100%" height={300}>
         <LineChart
@@ -42,26 +42,26 @@ const PressureChart = ({ data }) => {
 
           <Line
             type="monotone"
-            dataKey="pressureSensor1"
+            dataKey="CO"
             stroke="#8884d8"
             strokeWidth={2}
-            name="Sensor 1"
+            name="CO"
             activeDot={{ r: 6 }}
           />
           <Line
             type="monotone"
-            dataKey="pressureSensor2"
+            dataKey="Smoke"
             stroke="#82ca9d"
             strokeWidth={2}
-            name="Sensor 2"
+            name="Smoke"
             activeDot={{ r: 6 }}
           />
           <Line
             type="monotone"
-            dataKey="pressureSensor3"
+            dataKey="LPG"
             stroke="#ff7300"
             strokeWidth={2}
-            name="Sensor 3"
+            name="LPG"
             activeDot={{ r: 6 }}
           />
         </LineChart>

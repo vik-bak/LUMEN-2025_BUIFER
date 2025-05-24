@@ -102,20 +102,25 @@ static float duty_cycle = 0.0;
 static uint32_t cmp_reg;
 static UBaseType_t watermark;
 static MPU6050_t imuData;
-
+static float calValue = 0.902;
 static S_GPS_L86_DATA gpsData;
 static bool sameValueLow = false;
 static bool sameValueMedium = false;
 static bool sameValueHigh = false;
+static bool helmetOnFlag = false;
+static bool helmetOffFlag = false;
+static bool highTemp = false;
+static bool lowTemp = false;
 //static float batMaxVoltage = 4.2;
-static float voltageThresholdMaximum = 3.9;
-static float voltageThresholdMinimum = 3.5;
+static float voltageThresholdMaximum = 3.78;
+static float voltageThresholdMinimum = 3.37;
 
 static float acc_threshold = 20*G_CONSTANT;
 static float accx;
 static unsigned long lastSendTime;
 static unsigned long sendInterval = 30000;
 static float accel;
+static int FSR_reading;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -217,6 +222,11 @@ int main(void)
   MPU6050_Init(&hi2c3);
   UsrGpsL86Init(&huart5);
   begin(&hadc1);
+  char buffer[100] = "80\n";
+  HAL_Delay(500);
+  HAL_UART_Transmit(&huart1,(uint8_t*)buffer,strlen(buffer), 50);
+  HAL_Delay(5000);
+  //HAL_UART_Transmit(&huart1,(uint8_t*)buffer,strlen(buffer), 50);
   /* ------ QUEUE RELATED ------ */
   Queue_Handler = xQueueCreate(2,sizeof(data));
   if (Queue_Handler == NULL) {
@@ -719,7 +729,7 @@ static void MX_USART1_UART_Init(void)
 
   /* USER CODE END USART1_Init 1 */
   huart1.Instance = USART1;
-  huart1.Init.BaudRate = 115200;
+  huart1.Init.BaudRate = 9600;
   huart1.Init.WordLength = UART_WORDLENGTH_8B;
   huart1.Init.StopBits = UART_STOPBITS_1;
   huart1.Init.Parity = UART_PARITY_NONE;
@@ -905,17 +915,36 @@ static void MX_GPIO_Init(void)
 	void measurements_task(void *pvParameters){
 		while(1)
 		{
+			ADC_ChannelConfTypeDef sConfig;
 			shtc3_perform_measurements(&hi2c2, &temp, &hum);
 
 			MPU6050_Read_All(&hi2c3, &imuData);
 
 			Usr_GpsL86GetValues(&gpsData);
 			begin(&hadc1);
-
-
 			measuredData.lpg = readLPG(&hadc1);
 			measuredData.smoke = readSmoke(&hadc1);
 			measuredData.co = readCO(&hadc1);
+			HAL_ADC_Stop(&hadc1);
+			sConfig.Channel = ADC_CHANNEL_13;
+  	  	  	sConfig.Rank = ADC_REGULAR_RANK_1;
+  	  	  	sConfig.SamplingTime = ADC_SAMPLETIME_2CYCLES_5;
+  	  	  	sConfig.SingleDiff = ADC_SINGLE_ENDED;
+  	  	  	sConfig.OffsetNumber = ADC_OFFSET_NONE;
+  	  	  	sConfig.Offset = 0;
+
+			if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK)
+				{
+				 Error_Handler();
+				}
+			HAL_ADC_Start(&hadc1); // start the adc
+
+			HAL_ADC_PollForConversion(&hadc1, 100); // poll for conversion
+
+			FSR_reading= HAL_ADC_GetValue(&hadc1); // get the adc value
+
+			HAL_ADC_Stop(&hadc1); // stop adc*/
+
 			measuredData.humidity = hum;
 			measuredData.temperature = temp;
 			measuredData.accelX = imuData.Ax;
@@ -929,10 +958,10 @@ static void MX_GPIO_Init(void)
 			measuredData.time = gpsData.fixedTime;
 			accx = measuredData.accelZ;
 
-			/*HAL_ADC_Start(&hadc2);
+			HAL_ADC_Start(&hadc2);
 			HAL_ADC_PollForConversion(&hadc2, 100);
-			measuredData.batStatus = (HAL_ADC_GetValue(&hadc2)*batMaxVoltage)/4095;
-			HAL_ADC_Stop(&hadc2);*/
+			measuredData.batStatus = (HAL_ADC_GetValue(&hadc2)*4.2*calValue)/4095;
+			HAL_ADC_Stop(&hadc2);
 
 			accel = sqrt(square(imuData.Ax) + square(imuData.Ay) + square(imuData.Az));
 			if (accel >= 2.0 ){
@@ -946,6 +975,8 @@ static void MX_GPIO_Init(void)
 				sprintf(buffer,"10\n");
 				HAL_UART_Transmit(&huart1,(uint8_t*)buffer,strlen(buffer), 50);
 				HAL_UART_Transmit(&huart3,(uint8_t*)buffer,strlen(buffer), 50);
+				HAL_GPIO_WritePin(GPIOA, GPIO_PIN_15, GPIO_PIN_SET);
+				HAL_GPIO_WritePin(GPIOC, GPIO_PIN_2, GPIO_PIN_RESET);
 				sameValueLow = true;
 				sameValueMedium = false;
 				sameValueHigh = false;
@@ -954,8 +985,10 @@ static void MX_GPIO_Init(void)
 			if (measuredData.batStatus >= voltageThresholdMinimum && measuredData.batStatus <= voltageThresholdMaximum && !sameValueMedium){
 				char buffer[100];
 				sprintf(buffer,"20\n");
-				HAL_UART_Transmit(&huart1,(uint8_t*)buffer,strlen(buffer), 50);
+				//HAL_UART_Transmit(&huart1,(uint8_t*)buffer,strlen(buffer), 50);
 				HAL_UART_Transmit(&huart3,(uint8_t*)buffer,strlen(buffer), 50);
+				HAL_GPIO_WritePin(GPIOA, GPIO_PIN_15, GPIO_PIN_RESET);
+				HAL_GPIO_WritePin(GPIOC, GPIO_PIN_2, GPIO_PIN_RESET);
 				sameValueLow = false;
 				sameValueMedium = true;
 				sameValueHigh = false;
@@ -966,15 +999,40 @@ static void MX_GPIO_Init(void)
 				sprintf(buffer,"30\n");
 				HAL_UART_Transmit(&huart1,(uint8_t*)buffer,strlen(buffer), 50);
 				HAL_UART_Transmit(&huart3,(uint8_t*)buffer,strlen(buffer), 50);
+				HAL_GPIO_WritePin(GPIOC, GPIO_PIN_2, GPIO_PIN_SET);
+				HAL_GPIO_WritePin(GPIOA, GPIO_PIN_15, GPIO_PIN_RESET);
 				sameValueLow = false;
 				sameValueMedium = false;
 				sameValueHigh = true;
 			}
 
-			if (HAL_GPIO_ReadPin(GPIOB, GPIO_PIN_2)){
+			if (measuredData.temperature >= 3000 && !highTemp){
 				char buffer[100];
 				sprintf(buffer,"40\n");
 				HAL_UART_Transmit(&huart3,(uint8_t*)buffer,strlen(buffer), 50);
+				HAL_UART_Transmit(&huart1,(uint8_t*)buffer,strlen(buffer), 50);
+				highTemp = true;
+				lowTemp = false;
+			}else if(measuredData.temperature <= 3000 && !lowTemp){
+				char buffer[100];
+				sprintf(buffer,"70\n");
+				HAL_UART_Transmit(&huart3,(uint8_t*)buffer,strlen(buffer), 50);
+				highTemp = false;
+				lowTemp = true;
+			}
+
+			if (FSR_reading >= 700.0 && !helmetOnFlag){
+				char buffer[100];
+				sprintf(buffer, "50\n");
+				HAL_UART_Transmit(&huart3, (uint8_t*)buffer,strlen(buffer), 50);
+				helmetOnFlag = true;
+				helmetOffFlag = false;
+			}else if (FSR_reading <= 700.0 && !helmetOffFlag){
+				char buffer[100];
+				sprintf(buffer, "60\n");
+				HAL_UART_Transmit(&huart3, (uint8_t*)buffer,strlen(buffer), 50);
+				helmetOnFlag = false;
+			    helmetOffFlag = true;
 			}
 
 			unsigned long currentTime =  xTaskGetTickCount();
@@ -995,7 +1053,7 @@ static void MX_GPIO_Init(void)
 		while(1){
 			if(xQueueReceive(Queue_Handler, &sendData, portMAX_DELAY) == pdPASS){
 				char buffer[100];
-				sprintf(buffer,"%d %d \n", sendData.humidity, sendData.temperature);
+				sprintf(buffer,"%d %d %f %f %f %f %f %f\n", sendData.humidity, sendData.temperature,sendData.altitude,sendData.latitude,sendData.longitude,sendData.lpg,sendData.smoke,sendData.co);
 				//xSemaphoreTake(AlarmMutex_Handler,portMAX_DELAY);
 				HAL_UART_Transmit(&huart3,(uint8_t*)buffer, strlen(buffer), 50);
 				//xSemaphoreGive(AlarmMutex_Handler);
@@ -1010,7 +1068,7 @@ static void MX_GPIO_Init(void)
 		while(1){
 			if(xSemaphoreTake(PWM_Sem_Handler,portMAX_DELAY) == pdTRUE){
 
-				if (state < 4){
+				if (state < 2){
 							state++;
 						}else state = 0;
 					switch(state){
@@ -1019,19 +1077,11 @@ static void MX_GPIO_Init(void)
 								  __HAL_TIM_SET_COMPARE(&htim3,TIM_CHANNEL_1,cmp_reg);
 								  break;
 							  case 1:
-								  cmp_reg = 0.25 * htim3.Init.Period;
+								  cmp_reg = 0.1 * htim3.Init.Period;
 								  __HAL_TIM_SET_COMPARE(&htim3,TIM_CHANNEL_1,cmp_reg);
 								  break;
 							  case 2:
-								  cmp_reg = 0.5 * htim3.Init.Period;
-								  __HAL_TIM_SET_COMPARE(&htim3,TIM_CHANNEL_1,cmp_reg);
-								  break;
-							  case 3:
-								  cmp_reg = 0.75 * htim3.Init.Period;
-								  __HAL_TIM_SET_COMPARE(&htim3,TIM_CHANNEL_1,cmp_reg);
-								  break;
-							  case 4:
-								  cmp_reg = 1 * htim3.Init.Period;
+								  cmp_reg = 0.25 * htim3.Init.Period;
 								  __HAL_TIM_SET_COMPARE(&htim3,TIM_CHANNEL_1,cmp_reg);
 								  break;
 					}

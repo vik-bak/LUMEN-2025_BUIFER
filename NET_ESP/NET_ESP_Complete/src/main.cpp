@@ -16,7 +16,15 @@
 #include <addons/TokenHelper.h>
 #include "Arducam_Mega.h"
 #include <sys/time.h>
+//#include <SD.h>
+//#include <SPI.h>
+#include <SD_MMC.h>
 
+
+#define SD_CS 15
+#define SD_MOSI 13 
+#define SD_MISO 12 
+#define SD_SCK 14
 
 #define WIFI_SSID "mihaNetwork"             //WiFi credentials for phone hotspot to connect ESP to net
 #define WIFI_PASSWORD "uhms9878"
@@ -82,6 +90,12 @@ HardwareSerial mySerial(2);
 typedef struct {
   int32_t temp;
   int32_t hum;
+  float altitude;
+  float latitude;
+  float longitude;
+  float lpg;
+  float smoke;
+  float co;
 }sensorData;
 
 sensorData sendStruct;
@@ -179,6 +193,21 @@ void capturePhotoSaveLittleFS(void)
       Serial.println(" bytes");
     }
     file.close();
+    char filename[32];
+    
+    snprintf(filename, sizeof(filename), "/photo.jpg");
+    fs::FS &fs = SD_MMC; 
+    Serial.printf("Picture file name: %s\n", filename);
+
+    File file1 = fs.open(filename, FILE_WRITE);
+    if(!file1){
+    Serial.println("Failed to open file in writing mode");
+  } 
+  else {
+  file1.write(imageBuffer ,imageSize); // payload (image), payload length
+  Serial.printf("Saved file to path: %s\n", filename);
+}
+  file1.close();
 }
 }
 
@@ -276,6 +305,8 @@ void setup() {
 
     /* Enable the Interrupt */
   gpio_intr_enable(BUTTON_GPIO);
+
+  
   
 }
 
@@ -328,6 +359,12 @@ void acquireData(void *pvParameters){
       Firebase.RTDB.setInt(&fbdo,buffer,1);
       flagReceived = true;
     }
+    if (message == "40"){
+      char buffer[100];
+      sprintf(buffer,"/high_temperature");
+      Firebase.RTDB.setBool(&fbdo,buffer,true);
+      flagReceived = true;
+    }
     if (message == "50"){
       char buffer[100];
       sprintf(buffer,"/helmet_on");
@@ -340,10 +377,16 @@ void acquireData(void *pvParameters){
       Firebase.RTDB.setBool(&fbdo,buffer,false);
       flagReceived = true;
     }
+    if (message == "70"){
+      char buffer[100];
+      sprintf(buffer,"/high_temperature");
+      Firebase.RTDB.setBool(&fbdo,buffer,false);
+      flagReceived = true;
+    }
     Serial.println(message);
 
     if(!flagReceived){
-    int result = sscanf(message.c_str(),"%d %d", &sendStruct.hum, &sendStruct.temp);
+    int result = sscanf(message.c_str(),"%d %d %f %f %f %f %f %f", &sendStruct.hum, &sendStruct.temp, &sendStruct.altitude,&sendStruct.latitude,&sendStruct.longitude,&sendStruct.lpg,&sendStruct.smoke,&sendStruct.co);
     char buffer[100];
     sprintf(buffer,"/data2/%d/temp",ink);
     //Database.set<int>(aClient,buffer,sendStruct.temp,processData,"RTDB_Send_Int");
@@ -354,6 +397,79 @@ void acquireData(void *pvParameters){
       Serial.print("Error sending data: ");
       Serial.println(fbdo.errorReason());
       }
+      //altitude
+      buffer[0] = '\0';
+      sprintf(buffer, "/data2/%d/altitude", ink);
+      if (Firebase.RTDB.setInt(&fbdo, buffer, sendStruct.altitude))
+      {
+        Serial.println("Altitude sent successfully");
+      }
+      else
+      {
+        Serial.print("Error sending altitude: ");
+        Serial.println(fbdo.errorReason());
+      }
+      //latitude
+      buffer[0] = '\0';
+      sprintf(buffer, "/data2/%d/latitude", ink);
+      if (Firebase.RTDB.setInt(&fbdo, buffer, sendStruct.latitude))
+      {
+        Serial.println("Latitude sent successfully");
+      }
+      else
+      {
+        Serial.print("Error sending latitude: ");
+        Serial.println(fbdo.errorReason());
+      }
+      //longitude
+      buffer[0] = '\0';
+      sprintf(buffer, "/data2/%d/longitude", ink);
+      if (Firebase.RTDB.setInt(&fbdo, buffer, sendStruct.longitude))
+      {
+        Serial.println("Longitude sent successfully");
+      }
+      else
+      {
+        Serial.print("Error sending longitude: ");
+        Serial.println(fbdo.errorReason());
+      }
+      //lpg
+      buffer[0] = '\0';
+      sprintf(buffer, "/data2/%d/lpg", ink);
+      if (Firebase.RTDB.setInt(&fbdo, buffer, sendStruct.lpg))
+      {
+        Serial.println("LPG sent successfully");
+      }
+      else
+      {
+        Serial.print("Error sending LPG: ");
+        Serial.println(fbdo.errorReason());
+      }
+      //smoke
+      buffer[0] = '\0';
+      sprintf(buffer, "/data2/%d/smoke", ink);
+      if (Firebase.RTDB.setInt(&fbdo, buffer, sendStruct.smoke))
+      {
+        Serial.println("Smoke sent successfully");
+      }
+      else
+      {
+        Serial.print("Error sending smoke: ");
+        Serial.println(fbdo.errorReason());
+      }
+      //co
+      buffer[0] = '\0';
+      sprintf(buffer, "/data2/%d/co", ink);
+      if (Firebase.RTDB.setInt(&fbdo, buffer, sendStruct.co))
+      {
+        Serial.println("CO sent successfully");
+      }
+      else
+      {
+        Serial.print("Error sending CO: ");
+        Serial.println(fbdo.errorReason());
+      }
+    //time sending
     buffer[0] = '\0';
     sprintf(buffer,"/data2/%d/hum",ink);
     Firebase.RTDB.setInt(&fbdo,buffer,sendStruct.hum);

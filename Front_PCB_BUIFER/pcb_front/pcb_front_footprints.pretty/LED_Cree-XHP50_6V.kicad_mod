@@ -1,0 +1,134 @@
+(footprint "LED_Cree-XHP50_6V"
+	(version 20241229)
+	(generator "pcbnew")
+	(generator_version "9.0")
+	(layer "F.Cu")
+	(descr "Cree XHP50, 6V footprint, http://www.cree.com/~/media/Files/Cree/LED%20Components%20and%20Modules/XLamp/Data%20and%20Binning/ds%20XHP50.pdf")
+	(tags "LED Cree XHP50")
+	(property "Reference" "D1"
+		(at 3.263447 -2.125001 180)
+		(layer "F.SilkS")
+		(hide yes)
+		(uuid "fed9417d-df0d-4a3d-81f5-f265454827ee")
+		(effects
+			(font
+				(face "Yu Gothic")
+				(size 0.5 0.5)
+				(thickness 0.1)
+			)
+		)
+		(render_cache "D1" 0
+			(polygon
+				(pts
+					(xy 3.088165 -2.439871) (xy 3.13059 -2.430738) (xy 3.16673 -2.416338) (xy 3.19755 -2.396933) (xy 3.223757 -2.372403)
+					(xy 3.243167 -2.346222) (xy 3.258746 -2.3157) (xy 3.270406 -2.280172) (xy 3.277824 -2.238818) (xy 3.280452 -2.190686)
+					(xy 3.276849 -2.136476) (xy 3.266688 -2.090386) (xy 3.250652 -2.051124) (xy 3.229001 -2.017634)
+					(xy 3.201562 -1.989155) (xy 3.174946 -1.969627) (xy 3.144953 -1.954172) (xy 3.111111 -1.942776)
+					(xy 3.072825 -1.935632) (xy 3.029401 -1.933132) (xy 2.887313 -1.933132) (xy 2.887313 -1.972608)
+					(xy 2.933444 -1.972608) (xy 3.028058 -1.972608) (xy 3.069245 -1.975311) (xy 3.104423 -1.982948)
+					(xy 3.134531 -1.995018) (xy 3.160342 -2.011325) (xy 3.182419 -2.031989) (xy 3.202929 -2.060909)
+					(xy 3.218251 -2.095998) (xy 3.228076 -2.138505) (xy 3.231604 -2.189984) (xy 3.228635 -2.239174)
+					(xy 3.220401 -2.279652) (xy 3.207672 -2.312861) (xy 3.190867 -2.340004) (xy 3.170021 -2.361996)
+					(xy 3.144781 -2.379398) (xy 3.114441 -2.392372) (xy 3.077995 -2.400666) (xy 3.034194 -2.403635)
+					(xy 2.933444 -2.403635) (xy 2.933444 -1.972608) (xy 2.887313 -1.972608) (xy 2.887313 -2.443111)
+					(xy 3.038286 -2.443111)
+				)
+			)
+			(polygon
+				(pts
+					(xy 3.555073 -2.441157) (xy 3.555073 -1.970257) (xy 3.649351 -1.970257) (xy 3.649351 -1.933132)
+					(xy 3.410939 -1.933132) (xy 3.410939 -1.970257) (xy 3.511689 -1.970257) (xy 3.511689 -2.393866)
+					(xy 3.464775 -2.366149) (xy 3.408894 -2.341506) (xy 3.401017 -2.381989) (xy 3.438902 -2.396711)
+					(xy 3.47823 -2.416282) (xy 3.5192 -2.441157)
+				)
+			)
+		)
+	)
+	(property "Value" "LED_Cree_XHP50_6V"
+		(at 0 3.5 180)
+		(layer "F.Fab")
+		(hide yes)
+		(uuid "b9db4ce2-649e-42ca-8a4b-2b5d551301c4")
+		(effects
+			(font
+				(size 1 1)
+				(thickness 0.15)
+			)
+		)
+	)
+	(property "Datasheet" "http://www.cree.com/%7E/media/Files/Cree/LED%20Components%20and%20Modules/XLamp/Data%20and%20Binning/ds%20XHP50.pdf"
+		(at 0 0 0)
+		(unlocked yes)
+		(layer "F.Fab")
+		(hide yes)
+		(uuid "28b18509-dc40-48dc-8752-5d02a8d3b7e8")
+		(effects
+			(font
+				(size 1.27 1.27)
+				(thickness 0.15)
+			)
+		)
+	)
+	(property "Description" "XLamp® XHP50 LED, 6V footprint (2x2 serial LEDs in parallel)"
+		(at 0 0 0)
+		(unlocked yes)
+		(layer "F.Fab")
+		(hide yes)
+		(uuid "a53fd0d9-895a-4c33-a70d-23bc2b1e073a")
+		(effects
+			(font
+				(size 1.27 1.27)
+				(thickness 0.15)
+			)
+		)
+	)
+	(property "Manufacturer_Part_Number" "7443551470"
+		(at 0 0 0)
+		(unlocked yes)
+		(layer "F.Fab")
+		(hide yes)
+		(uuid "937a895a-f736-4e15-ae23-4eeb5639a1c6")
+		(effects
+			(font
+				(size 1 1)
+				(thickness 0.15)
+			)
+		)
+	)
+	(attr smd)
+	(fp_circle
+		(center 0 0)
+		(end 8.15 0)
+		(stroke
+			(width 0.1)
+			(type solid)
+		)
+		(fill no)
+		(layer "Dwgs.User")
+		(uuid "4c35e6fb-a972-4076-92ec-acff5ac034db")
+	)
+	(pad "1" smd circle
+		(at 9.5 5 90)
+		(size 3 3)
+		(layers "F.Cu" "F.Mask" "F.Paste")
+		(uuid "e6c6131e-26e1-47bf-8db0-8902cf44bc48")
+	)
+	(pad "2" smd circle
+		(at -9.5 -5 90)
+		(size 3 3)
+		(layers "F.Cu" "F.Mask" "F.Paste")
+		(uuid "6529435b-c083-4ca8-973a-751db7e06225")
+	)
+	(embedded_fonts no)
+	(model "${KICAD9_3DMODEL_DIR}/LED_SMD.3dshapes\\LED_Cree-XHP50_6V.wrl"
+		(offset
+			(xyz 0 0 0)
+		)
+		(scale
+			(xyz 1 1 1)
+		)
+		(rotate
+			(xyz 0 0 0)
+		)
+	)
+)

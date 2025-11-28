@@ -1,0 +1,4 @@
+(fp_lib_table
+  (version 7)
+  (lib (name "dasduino_footprints")(type "KiCad")(uri "C:/Users/Rio/Documents/KiCad/9.0/footprints/dasduino_footprints.pretty")(options "")(descr ""))
+)
